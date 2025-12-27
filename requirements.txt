@@ -1,0 +1,6 @@
+requests
+pandas
+openpyxl
+streamlit
+extra-streamlit-components
+watchdog

@@ -7,10 +7,21 @@ __pycache__/
 venv/
 env/
 
+# Environment
+.env
+.env.*
+
 # Data
 *.xlsx
+*.csv
 .api_key
 .DS_Store
+
+# Preserve specific data files
+!test_dummy_data.csv
+!test_dummy_data copy.csv
+!dummy_data.csv
+!API_VALIDATION.md
 
 # Logs
 *.log
