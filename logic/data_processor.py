@@ -11,7 +11,60 @@ class DataProcessor:
     """
     
     STANDARD_BASES = ['EUR', 'GBP', 'AUD', 'NZD', 'USD', 'CAD', 'CHF']
-    TARGET_BASKET = ["USD", "EUR", "GBP", "BWP", "MWK", "ZAR"]
+    
+    # Currency Presets
+    TARGET_BASKET = ["USD", "EUR", "GBP", "BWP", "MWK", "ZAR"]  # Default
+    MAJOR_BASKET = ["USD", "EUR", "GBP", "CHF", "JPY", "CAD", "AUD", "NZD"]
+    AFRICAN_BASKET = ["BWP", "MWK", "NAD", "SZL", "LSL", "ZAR", "NGN", "KES", "EGP"]
+    
+    @staticmethod
+    def parse_targets(input_str: str, base_currency: str = None, api_client=None) -> List[str]:
+        """
+        Parses user input for target currencies.
+        
+        Supports:
+            - Comma-separated: "USD, EUR, GBP"
+            - Keywords: [ALL], [MAJOR], [AFRICAN], [DEFAULT]
+            - Empty/blank: Returns default basket
+            
+        Args:
+            input_str: User input string
+            base_currency: Base currency code (needed for [ALL])
+            api_client: TwelveDataClient instance (needed for [ALL])
+            
+        Returns:
+            List of currency codes
+        """
+        if not input_str or not input_str.strip():
+            return DataProcessor.TARGET_BASKET.copy()
+        
+        cleaned = input_str.strip().upper()
+        
+        # Handle keywords
+        if cleaned == "[DEFAULT]" or cleaned == "DEFAULT":
+            return DataProcessor.TARGET_BASKET.copy()
+        
+        if cleaned == "[MAJOR]" or cleaned == "MAJOR":
+            return DataProcessor.MAJOR_BASKET.copy()
+        
+        if cleaned == "[AFRICAN]" or cleaned == "AFRICAN":
+            return DataProcessor.AFRICAN_BASKET.copy()
+        
+        if cleaned == "[ALL]" or cleaned == "ALL":
+            if api_client and base_currency:
+                all_pairs = api_client.fetch_available_pairs(base_currency)
+                if all_pairs:
+                    return all_pairs
+            # Fallback if API call fails
+            logger.warning("[ALL] requested but no API client provided or API failed. Using defaults.")
+            return DataProcessor.TARGET_BASKET.copy()
+        
+        # Parse comma-separated input
+        currencies = [c.strip().upper() for c in cleaned.split(",")]
+        # Filter out empty strings and base currency itself
+        currencies = [c for c in currencies if c and c != (base_currency.upper() if base_currency else "")]
+        
+        return currencies if currencies else DataProcessor.TARGET_BASKET.copy()
 
     @staticmethod
     def parse_input_bases(base_currencies_str: str) -> List[str]:
@@ -22,15 +75,22 @@ class DataProcessor:
         return [b for b in bases if b]
     
     @classmethod
-    def generate_pairs_config(cls, base_currencies: List[str]) -> List[Dict]:
+    def generate_pairs_config(cls, base_currencies: List[str], target_currencies: List[str] = None) -> List[Dict]:
         """
         Generates a list of dictionaries containing pair configuration.
         Preserves the legacy logic for Exotic-Exotic cross rates via USD.
+        
+        Args:
+            base_currencies: List of base currency codes
+            target_currencies: Optional list of target currencies. Defaults to TARGET_BASKET.
         """
+        if target_currencies is None:
+            target_currencies = cls.TARGET_BASKET
+            
         pairs_config = []
         
         for user_base in base_currencies:
-            for user_target in cls.TARGET_BASKET:
+            for user_target in target_currencies:
                 if user_base == user_target:
                     continue
                 

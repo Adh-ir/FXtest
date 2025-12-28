@@ -72,6 +72,44 @@ class TwelveDataClient:
         }
         return self._make_request(url, params)
 
+    def fetch_available_pairs(self, base_currency: str) -> List[str]:
+        """
+        Fetches all available forex pairs for a given base currency.
+        Returns list of target currency codes (e.g., ['USD', 'EUR', 'GBP', ...])
+        
+        Note: This does NOT count against rate limit as it's a metadata call.
+        """
+        url = f"{self.BASE_URL}/forex_pairs"
+        params = {"apikey": self.api_key}
+        
+        try:
+            response = requests.get(url, params=params, timeout=30)
+            data = response.json()
+            
+            if 'data' not in data:
+                logger.error(f"Failed to fetch forex pairs: {data}")
+                return []
+            
+            base_upper = base_currency.upper()
+            targets = set()
+            
+            for pair in data['data']:
+                symbol = pair.get('symbol', '')
+                if '/' in symbol:
+                    left, right = symbol.split('/')
+                    # If base is on the left (e.g., ZAR/USD), target is right
+                    if left == base_upper:
+                        targets.add(right)
+                    # If base is on the right (e.g., USD/ZAR), target is left
+                    elif right == base_upper:
+                        targets.add(left)
+            
+            return sorted(list(targets))
+            
+        except Exception as e:
+            logger.error(f"Error fetching forex pairs: {e}")
+            return []
+
     def _make_request(self, url: str, params: Dict[str, str], retry_count: int = 0) -> Optional[Dict[str, Any]]:
         """
         Helper to make the GET request with 429 handling and rate limit enforcement.

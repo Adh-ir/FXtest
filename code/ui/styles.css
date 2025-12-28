@@ -325,3 +325,31 @@ button[kind="primary"]:hover {
   box-shadow: 0 0 15px rgba(93, 223, 121, 0.6) !important;
   transform: scale(1.02);
 }
+
+/* Results Placeholder Container */
+.results-placeholder {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  padding: 40px 20px;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  margin-top: 10px;
+}
+
+.results-placeholder p {
+  color: var(--text-color) !important;
+  opacity: 0.7;
+  font-size: 1rem;
+  text-align: center;
+}
+
+/* Dataframe Styling */
+[data-testid="stDataFrame"] {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 15px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
