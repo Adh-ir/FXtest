@@ -230,7 +230,7 @@ else:
             with d_col1:
                 start_date = st.date_input("Start Date", key="extract_start", help="Start of historical rate range (YYYY-MM-DD)")
             with d_col2:
-                end_date = st.date_input("End Date", key="extract_end", help="End of historical rate range (YYYY-MM-DD)")
+                end_date = st.date_input("End Date", key="extract_end", help="End of historical rate range (exclusive, data goes up to but not including this date)")
             
             invert_rates_extraction = st.checkbox("Invert rates (1/Rate)", key="invert_extraction")
             
@@ -312,7 +312,7 @@ else:
                     # Reorder columns for readability
                     summary_df = summary_df[['Base', 'Source', 'Mean', 'Std Dev', 'CV', 'High', 'Low']]
                     
-                    st.dataframe(summary_df, use_container_width=True)
+                    st.dataframe(summary_df, use_container_width=True, hide_index=True)
                 else: # Detailed
                     st.dataframe(
                         res_df, 
