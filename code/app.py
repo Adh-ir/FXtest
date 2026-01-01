@@ -397,7 +397,7 @@ else:
 
         # --- RIGHT PANE (Audit Results / Progress) ---
         with col_right:
-            st.markdown("### 📋 Audit Results")
+            st.markdown('<h3 style="margin-top: var(--results-header-offset, -80px);">📋 Audit Results</h3>', unsafe_allow_html=True)
             
             # Check if we're processing
             if st.session_state.get('audit_processing', False):

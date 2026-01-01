@@ -1,18 +1,32 @@
 import streamlit as st
 import extra_streamlit_components as stx
 import datetime
+import sys
+import os
+from typing import Optional, Any
+
+# Add parent directory to path for logic imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(os.path.dirname(current_dir))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+try:
+    from logic.config import CACHE_CONFIG
+    EXPIRY_DAYS = CACHE_CONFIG.COOKIE_EXPIRY_DAYS
+except ImportError:
+    EXPIRY_DAYS = 7  # Fallback
 
 # Cookie Manager Key
 COOKIE_NAME = "twelve_data_api_key"
-EXPIRY_DAYS = 7
 
-def get_cookie_manager():
+def get_cookie_manager() -> stx.CookieManager:
     """
     Returns a CookieManager instance with a unique key to avoid widget conflicts.
     """
     return stx.CookieManager(key="fx_cookie_manager")
 
-def get_api_key(cookie_manager):
+def get_api_key(cookie_manager: stx.CookieManager) -> Optional[str]:
     """
     Retrieve API key from Session State or Cookie.
     Returns None if user has logged out or no valid key exists.
@@ -37,9 +51,9 @@ def get_api_key(cookie_manager):
     
     return None
 
-def set_api_key(cookie_manager, key):
+def set_api_key(cookie_manager: stx.CookieManager, key: str) -> None:
     """
-    Save API key to Session State and Cookie (7 days).
+    Save API key to Session State and Cookie.
     Also clears any force_logout flag.
     """
     # Clear logout flag if it was set
@@ -56,7 +70,7 @@ def set_api_key(cookie_manager, key):
     except Exception:
         pass  # Cookie save may fail but session state is primary
     
-def clear_api_key(cookie_manager):
+def clear_api_key(cookie_manager: stx.CookieManager) -> None:
     """
     Remove API key from everything and set force_logout flag.
     The force_logout flag ensures the modal shows even if cookies are stale.

@@ -15,6 +15,8 @@ import requests
 from typing import Generator, Dict, Any, Tuple, Optional
 from datetime import datetime
 
+from .config import API_CONFIG, AUDIT_CONFIG
+
 # Configure logger
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
@@ -75,7 +77,7 @@ def _fetch_rate_from_api(api_key: str, base: str, source: str, date_str: str) ->
     """
     Fetches a single historical rate from Twelve Data API.
     """
-    url = "https://api.twelvedata.com/time_series"
+    url = f"{API_CONFIG.BASE_URL}/time_series"
     params = {
         "apikey": api_key,
         "symbol": f"{base}/{source}",
@@ -85,7 +87,7 @@ def _fetch_rate_from_api(api_key: str, base: str, source: str, date_str: str) ->
     }
     
     try:
-        resp = requests.get(url, params=params, timeout=30)
+        resp = requests.get(url, params=params, timeout=API_CONFIG.REQUEST_TIMEOUT_SECONDS)
         data = resp.json()
         
         if 'values' in data and len(data['values']) > 0:
@@ -190,9 +192,9 @@ def process_audit_file(
     df['Variance %'] = None
     df['Status'] = None
     
-    # --- 4. Process Rows ---
-    BATCH_SIZE = 5
-    BATCH_SLEEP = 65
+    # --- 4. Process Rows (use config for rate limiting) ---
+    BATCH_SIZE = AUDIT_CONFIG.BATCH_SIZE
+    BATCH_SLEEP = AUDIT_CONFIG.BATCH_SLEEP_SECONDS
     
     passed = 0
     exceptions = 0

@@ -4,9 +4,10 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from .api_client import TwelveDataClient
 from .data_processor import DataProcessor
+from .config import CACHE_CONFIG
 
-# Cache for 30 minutes (1800 seconds)
-@st.cache_data(ttl=1800, show_spinner=False)
+# Cache for configured duration
+@st.cache_data(ttl=CACHE_CONFIG.RATE_TTL_SECONDS, show_spinner=False)
 def get_rates(api_key: str, base_currencies: List[str], start_date: str, end_date: str, target_currencies: List[str] = None) -> pd.DataFrame:
     """
     Main entry point for fetching Forex rates.
@@ -46,11 +47,11 @@ def get_rates(api_key: str, base_currencies: List[str], start_date: str, end_dat
     
     return final_df
 
-@st.cache_data(ttl=86400, show_spinner=False)
+@st.cache_data(ttl=CACHE_CONFIG.CURRENCY_TTL_SECONDS, show_spinner=False)
 def get_available_currencies(api_key: str, base_currency: str) -> List[str]:
     """
     Fetches all available forex pairs for a given base currency.
-    Cached for 24 hours.
+    Cached for configured duration (default: 24 hours).
     """
     client = TwelveDataClient(api_key)
     return client.fetch_available_pairs(base_currency)

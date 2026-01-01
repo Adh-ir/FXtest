@@ -10,6 +10,8 @@ import logging
 from collections import deque
 from typing import Optional, Dict, Any, List
 
+from .config import API_CONFIG
+
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -20,9 +22,9 @@ class TwelveDataClient:
     Enforces strict rate limiting (8 requests per minute) for Free Plan usage.
     """
     
-    BASE_URL = "https://api.twelvedata.com"
-    RATE_LIMIT_REQUESTS = 8
-    RATE_LIMIT_WINDOW = 60  # seconds
+    BASE_URL = API_CONFIG.BASE_URL
+    RATE_LIMIT_REQUESTS = API_CONFIG.RATE_LIMIT_REQUESTS
+    RATE_LIMIT_WINDOW = API_CONFIG.RATE_LIMIT_WINDOW_SECONDS
 
     def __init__(self, api_key: str):
         self.api_key = api_key
@@ -122,12 +124,12 @@ class TwelveDataClient:
         self._enforce_rate_limit()
         
         try:
-            response = requests.get(url, params=params)
+            response = requests.get(url, params=params, timeout=API_CONFIG.REQUEST_TIMEOUT_SECONDS)
             
             if response.status_code == 429:
-                if retry_count < 3:
+                if retry_count < API_CONFIG.MAX_RETRIES:
                     # Exponential backoff: 60s, 120s, etc.
-                    wait_time = 60 * (retry_count + 1)
+                    wait_time = API_CONFIG.RETRY_BACKOFF_SECONDS * (retry_count + 1)
                     logger.warning(f"HTTP 429 received from API. Retrying in {wait_time}s...")
                     time.sleep(wait_time)
                     return self._make_request(url, params, retry_count + 1)
@@ -139,8 +141,8 @@ class TwelveDataClient:
             
             # Application-level error check
             if data.get('code') == 429:
-                if retry_count < 3:
-                    wait_time = 60 * (retry_count + 1)
+                if retry_count < API_CONFIG.MAX_RETRIES:
+                    wait_time = API_CONFIG.RETRY_BACKOFF_SECONDS * (retry_count + 1)
                     logger.warning(f"API Code 429 received. Retrying in {wait_time}s...")
                     time.sleep(wait_time)
                     return self._make_request(url, params, retry_count + 1)
