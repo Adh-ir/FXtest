@@ -40,7 +40,7 @@ if 'load_css' in locals():
 st.markdown('<h1 class="gradient-title"><span class="title-fx">FX</span> <span class="title-test">Test</span> <span style="font-size: 2rem; vertical-align: middle; opacity: 0.7;">| Help & Information</span></h1>', unsafe_allow_html=True)
 
 # Main content container matching app styling
-# st.markdown('<div class="results-container" style="height: auto; min-height: 70vh;">', unsafe_allow_html=True) # REMOVED based on feedback
+st.markdown('<div class="help-container">', unsafe_allow_html=True) 
 
 # --- SECTIONS ---
 
@@ -156,4 +156,4 @@ st.markdown("""
 3.  **Input**: Copy the key and paste it into the secure prompt when launching this app.
 """)
 
-st.markdown('</div>', unsafe_allow_html=True) # End of removed container
+st.markdown('</div>', unsafe_allow_html=True)

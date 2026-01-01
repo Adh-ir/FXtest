@@ -597,3 +597,15 @@ div[data-testid="stAlert"] p {
 [data-testid="stSidebarCollapsedControl"] {
   display: none !important;
 }
+/* Help Page Specific Container */
+.help-container {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  padding: 30px;
+  height: auto;
+  min-height: 70vh;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  margin-top: 20px;
+  margin-bottom: 40px;
+}
+
