@@ -13,7 +13,7 @@ import logging
 import pandas as pd
 import requests
 from typing import Generator, Dict, Any, Tuple, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .config import API_CONFIG, AUDIT_CONFIG
 
@@ -79,7 +79,7 @@ def _set_cached_rate(date_str: str, base: str, source: str, rate: float):
     _rate_cache[key] = rate
 
 
-def _fetch_rate_from_api(api_key: str, base: str, source: str, date_str: str) -> Optional[float]:
+def _fetch_rate_raw(api_key: str, base: str, source: str, date_str: str) -> Optional[float]:
     """
     Fetches a single historical rate from Twelve Data API.
     """
@@ -111,6 +111,32 @@ def _fetch_rate_from_api(api_key: str, base: str, source: str, date_str: str) ->
         return None
 
 
+def _fetch_rate_with_fallback(api_key: str, base: str, source: str, date_str: str) -> Optional[float]:
+    """
+    Fetches rate with a 3-day lookback fallback for missing data (e.g. weekends).
+    """
+    # 1. Try exact date
+    rate = _fetch_rate_raw(api_key, base, source, date_str)
+    if rate is not None:
+        return rate
+        
+    # 2. Lookback up to 3 days
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+        for i in range(1, 4):
+            prev_date = dt - timedelta(days=i)
+            prev_str = prev_date.strftime("%Y-%m-%d")
+            
+            logger.info(f"Looking back {i} day(s) to {prev_str} for {base}/{source}")
+            rate = _fetch_rate_raw(api_key, base, source, prev_str)
+            if rate is not None:
+                return rate
+    except Exception as e:
+        logger.warning(f"Error during lookback: {e}")
+        
+    return None
+
+
 def _generate_mock_rate(base: str, source: str, user_rate: float) -> float:
     """
     Generates a mock rate for testing mode.
@@ -124,25 +150,36 @@ def _generate_mock_rate(base: str, source: str, user_rate: float) -> float:
 def _parse_date(date_value: Any, date_fmt: str) -> Optional[str]:
     """
     Parses a date value from Excel into a standardized YYYY-MM-DD string.
-    """
-    fmt_map = {
-        "YYYY-MM-DD": "%Y-%m-%d",
-        "DD/MM/YYYY": "%d/%m/%Y",
-        "MM/DD/YYYY": "%m/%d/%Y",
-        "DD-MM-YYYY": "%d-%m-%Y",
-        "YYYY/MM/DD": "%Y/%m/%d",
-    }
     
-    python_fmt = fmt_map.get(date_fmt, "%Y-%m-%d")
+    Uses the format string to determine day/month order (dayfirst), then
+    leverages pandas for flexible parsing that handles:
+    - Different separators (-, /, .)
+    - Single-digit days/months (1 vs 01)
+    - Various formats as long as day/month order is correct
+    """
+    
+    # Detect if format is day-first or month-first by checking position of D vs M
+    fmt_upper = date_fmt.upper()
+    
+    # Find first occurrence of D and M in the format
+    d_pos = fmt_upper.find('D')
+    m_pos = fmt_upper.find('M')
+    
+    # If D appears before M, it's day-first; otherwise month-first
+    # Default to month-first (ISO standard) if can't determine
+    dayfirst = d_pos < m_pos if (d_pos >= 0 and m_pos >= 0) else False
     
     try:
         if isinstance(date_value, datetime):
             return date_value.strftime("%Y-%m-%d")
         elif isinstance(date_value, str):
-            dt = datetime.strptime(date_value.strip(), python_fmt)
+            date_str = date_value.strip()
+            # Use pandas with the detected dayfirst setting
+            dt = pd.to_datetime(date_str, dayfirst=dayfirst)
             return dt.strftime("%Y-%m-%d")
         else:
-            dt = pd.to_datetime(date_value)
+            # Excel datetime objects, etc.
+            dt = pd.to_datetime(date_value, dayfirst=dayfirst)
             return dt.strftime("%Y-%m-%d")
     except Exception as e:
         logger.warning(f"Date parse error for '{date_value}': {e}")
@@ -248,7 +285,7 @@ def process_audit_file(
                     }
                     time.sleep(BATCH_SLEEP)
                 
-                api_rate = _fetch_rate_from_api(api_key, base, source, date_str)
+                api_rate = _fetch_rate_with_fallback(api_key, base, source, date_str)
                 
                 if api_rate is None:
                     df.at[idx, 'Status'] = 'API_ERROR'
@@ -300,14 +337,16 @@ def process_audit_file(
         "testing_mode": testing_mode
     }
     
+    # Include the final result in the yield for reliable capture
     yield {
         "current": total_rows,
         "total": total_rows,
         "message": f"Audit complete. Passed: {passed}, Exceptions: {exceptions}, Errors: {api_errors}",
-        "status": "complete"
+        "status": "complete",
+        "result": (df, summary)  # Include result here for reliable access
     }
     
-    return df, summary
+    return df, summary  # Keep for backward compatibility
 
 
 def clear_rate_cache():
@@ -322,22 +361,20 @@ def run_audit(
     date_fmt: str = "YYYY-MM-DD",
     threshold: float = 5.0,
     api_key: str = "",
-    testing_mode: bool = True
+    testing_mode: bool = True,
+    invert_rates: bool = False
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """
-    Runs the audit without yielding progress (for simple scripts).
+    Runs the audit synchronously (for simple scripts and Streamlit).
+    Returns the result directly without using StopIteration.
     """
-    gen = process_audit_file(file, date_fmt, threshold, api_key, testing_mode)
+    gen = process_audit_file(file, date_fmt, threshold, api_key, testing_mode, invert_rates)
     
     result = None
     for update in gen:
         logger.info(update['message'])
-        if update['status'] == 'complete':
-            pass
-    
-    try:
-        result = gen.send(None)
-    except StopIteration as e:
-        result = e.value
+        # Capture result from the 'complete' message
+        if update.get('status') == 'complete' and 'result' in update:
+            result = update['result']
     
     return result if result else (pd.DataFrame(), {})

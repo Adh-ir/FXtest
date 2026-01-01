@@ -63,6 +63,52 @@ class TestParseDate:
         result = _parse_date('invalid-date', 'YYYY-MM-DD')
         
         assert result is None
+    
+    def test_smart_separator_flexibility(self):
+        """Smart parsing handles different separators."""
+        from logic.auditor import _parse_date
+        
+        # Format says dashes, but data uses slashes - should still work
+        result = _parse_date('2026/1/2', 'YYYY-MM-DD')
+        
+        assert result == '2026-01-02'
+    
+    def test_smart_single_digit_handling(self):
+        """Smart parsing handles single-digit days/months."""
+        from logic.auditor import _parse_date
+        
+        result = _parse_date('2026-1-2', 'YYYY-MM-DD')
+        
+        assert result == '2026-01-02'
+    
+    def test_smart_dayfirst_detection(self):
+        """Smart parsing detects day-first from format."""
+        from logic.auditor import _parse_date
+        
+        # DD-MM format means 1/2 = Jan 2nd (day=1, month=2? No, day=2, month=1)
+        # Wait, DD-MM means first number is day, second is month
+        # So 2-1-2026 with DD-MM-YYYY means day=2, month=1 = Jan 2nd
+        result = _parse_date('2-1-2026', 'DD-MM-YYYY')
+        
+        assert result == '2026-01-02'
+    
+    def test_smart_monthfirst_detection(self):
+        """Smart parsing detects month-first from format."""
+        from logic.auditor import _parse_date
+        
+        # MM-DD format means 1-2 = Jan 2nd (month=1, day=2)
+        result = _parse_date('1-2-2026', 'MM-DD-YYYY')
+        
+        assert result == '2026-01-02'
+    
+    def test_smart_yyyy_dd_mm_ambiguity(self):
+        """Smart parsing handles YYYY-DD-MM format correctly."""
+        from logic.auditor import _parse_date
+        
+        # YYYY-DD-MM with 2026/1/2 means year=2026, day=1, month=2 = Feb 1st
+        result = _parse_date('2026/1/2', 'YYYY-DD-MM')
+        
+        assert result == '2026-02-01'
 
 
 class TestGenerateMockRate:

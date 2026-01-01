@@ -154,12 +154,30 @@ class DataProcessor:
                 return f"{currency_b}/{currency_a}", True
 
     @classmethod
-    def process_results(cls, fetcher_results: List[Dict]) -> pd.DataFrame:
+    def process_results(cls, fetcher_results: List[Dict], start_date: str = None, end_date: str = None) -> pd.DataFrame:
         """
         Processes fetch results into a single clean DataFrame.
+        Applies forward fill if dates are provided.
         """
         all_dfs = []
         rate_cache = {}
+        
+        # Determine filling range if dates provided
+        fill_index = None
+        if start_date and end_date:
+            try:
+                # Cap end_date at today to prevent future projection
+                req_end = pd.to_datetime(end_date)
+                today = pd.to_datetime(datetime.now().date())
+                
+                final_end = min(req_end, today)
+                start_dt = pd.to_datetime(start_date)
+                
+                if start_dt <= final_end:
+                    fill_index = pd.date_range(start=start_dt, end=final_end, freq='D')
+            except Exception as e:
+                logger.warning(f"Could not create fill index: {e}")
+
         
         # 1. Build Cache
         for item in fetcher_results:
@@ -168,6 +186,24 @@ class DataProcessor:
             symbol = config['api_symbol']
             
             df = cls._parse_api_response(api_data)
+            
+            if df is not None and not df.empty and fill_index is not None:
+                # Apply Forward Fill
+                df['Date'] = pd.to_datetime(df['Date'])
+                df.set_index('Date', inplace=True)
+                
+                # Reindex and Forward Fill with limit 3
+                df = df.reindex(fill_index)
+                df = df.ffill(limit=3)
+                
+                # Reset index to restore Date column
+                df.reset_index(inplace=True)
+                df.rename(columns={'index': 'Date'}, inplace=True)
+                df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
+                
+                # Drop rows that are still NaN (gaps > 3 days)
+                df.dropna(subset=['Exchange Rate'], inplace=True)
+                
             if df is not None and not df.empty:
                 rate_cache[symbol] = df
         

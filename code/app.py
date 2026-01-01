@@ -26,9 +26,19 @@ try:
     from logic.utils import convert_df_to_csv, convert_df_to_excel, create_template_excel
     from logic.facade import get_rates, get_available_currencies
     from logic.config import UI_CONFIG
+    _LOGIC_AVAILABLE = True
 except ImportError as e:
     st.error(f"Detailed Import Error: {e}")
     st.warning("Logic modules not found. Backend functionality will be disabled.")
+    # Fallback definitions to prevent NameError
+    process_audit_file = None
+    clear_rate_cache = None
+    convert_df_to_csv = None
+    convert_df_to_excel = None
+    create_template_excel = None
+    get_rates = None
+    get_available_currencies = None
+    _LOGIC_AVAILABLE = False
 
 # Try to import UI components
 try:
@@ -103,11 +113,54 @@ if not api_key:
 else:
     # --- MAIN APP SHELL ---
     
-    # Tabs for Rate Extraction vs Audit
-    tab1, tab2 = st.tabs(["📊 Rate Extraction", "🔍 Audit & Reconciliation"])
+    # Custom Navigation with Persistence using Radio Button
+    # This solves the issue of tabs resetting when inputs change (triggering rerun)
     
+    # Initialize session state for navigation if not present
+    if 'nav_radio' not in st.session_state:
+        st.session_state['nav_radio'] = "📊 Rate Extraction"
+        
+    # CSS to style the radio button like tabs
+    st.markdown("""
+    <style>
+    div.row-widget.stRadio > div {
+        flex-direction: row;
+        gap: 20px;
+        border-bottom: 2px solid #f0f2f6;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    div.row-widget.stRadio > div > label {
+        background-color: transparent;
+        border: 1px solid transparent;
+        border-radius: 5px;
+        padding: 5px 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    div.row-widget.stRadio > div > label:hover {
+        background-color: #f0f2f6;
+    }
+    div.row-widget.stRadio > div > label[data-testid="stMarkdownContainer"] > p {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    selected_tab = st.radio(
+        "Navigation", 
+        ["📊 Rate Extraction", "🔍 Audit & Reconciliation"], 
+        horizontal=True, 
+        label_visibility="collapsed",
+        key="nav_radio"
+    )
+
     # ==================== TAB 1: RATE EXTRACTION ====================
-    with tab1:
+    if selected_tab == "📊 Rate Extraction":
+        tab1_placeholder = st.container()
+        with tab1_placeholder:
+
         col_left, col_right = st.columns([1, 1.5], gap="large")
         
         # --- LEFT PANE (Inputs) ---
@@ -143,7 +196,7 @@ else:
                 # Use the selected base currency
                 primary_base = base_currency_selection.strip().upper() if base_currency_selection else "USD"
                 
-                if 'get_available_currencies' in locals() and api_key and primary_base:
+                if callable(get_available_currencies) and api_key and primary_base:
                     try:
                         all_curr = get_available_currencies(api_key, primary_base)
                         if all_curr:
@@ -264,7 +317,7 @@ else:
                         s_date_str = start_date.strftime("%Y-%m-%d")
                         e_date_str = end_date.strftime("%Y-%m-%d")
                         
-                        if 'get_rates' in locals():
+                        if callable(get_rates):
                             df = get_rates(api_key, bases, s_date_str, e_date_str, sources, invert=invert_rates_extraction)
                             
                             if not df.empty:
@@ -322,7 +375,7 @@ else:
                     )
                 
                 # Download Buttons
-                if 'convert_df_to_csv' in locals():
+                if callable(convert_df_to_csv):
                     # Spacer using CSS class
                     st.markdown('<div class="spacer-sm"></div>', unsafe_allow_html=True)
                     
@@ -356,7 +409,7 @@ else:
                 ''', unsafe_allow_html=True)
 
     # ==================== TAB 2: AUDIT & RECONCILIATION ====================
-    with tab2:
+    if selected_tab == "🔍 Audit & Reconciliation":
         col_left, col_right = st.columns([1, 1.5], gap="large")
         
         # --- LEFT PANE (Audit Inputs) ---
@@ -428,7 +481,12 @@ else:
                     if 'audit_result' in st.session_state:
                         del st.session_state['audit_result']
                     st.session_state['audit_processing'] = True
-                    st.session_state['audit_file_data'] = uploaded_file
+                    
+                    # Store file CONTENT (bytes) and name, not the UploadedFile object
+                    # UploadedFile objects can have issues after rerun (file pointer consumed)
+                    st.session_state['audit_file_data'] = uploaded_file.getvalue()
+                    st.session_state['audit_file_name'] = uploaded_file.name
+                    
                     st.session_state['audit_params'] = {
                         'date_fmt': date_format,
                         'threshold': threshold,
@@ -437,26 +495,31 @@ else:
                     }
                     st.rerun()
 
-        # --- RIGHT PANE (Audit Results / Progress) ---
+        # --- RIGHT PANE (Audit Results) ---
         with col_right:
             st.markdown('<h3 style="margin-top: var(--results-header-offset, -70px);">📋 Audit Results</h3>', unsafe_allow_html=True)
             
-            # Check if we're processing
+            # Check if we're processing (triggered by button click)
             if st.session_state.get('audit_processing', False):
-                if 'clear_rate_cache' in locals():
+                if callable(clear_rate_cache):
                     clear_rate_cache()
                 
-                # Create progress containers IN THE RIGHT PANE
-                progress_bar = st.progress(0, text="Initializing...")
-                status_text = st.empty()
-                
-                try:
-                    params = st.session_state['audit_params']
-                    file_data = st.session_state['audit_file_data']
-                    
-                    if 'process_audit_file' in locals():
-                        # Call the generator
-                        gen = process_audit_file(
+                with st.spinner("Running audit..."):
+                    try:
+                        params = st.session_state['audit_params']
+                        file_bytes = st.session_state['audit_file_data']
+                        file_name = st.session_state.get('audit_file_name', 'file.xlsx')
+                        
+                        # Wrap bytes in BytesIO for pandas to read
+                        from io import BytesIO
+                        file_data = BytesIO(file_bytes)
+                        file_data.name = file_name
+                        
+                        # Import run_audit
+                        from logic.auditor import run_audit
+                        
+                        # Run audit synchronously
+                        df, summary = run_audit(
                             file=file_data,
                             date_fmt=params['date_fmt'],
                             threshold=params['threshold'],
@@ -465,58 +528,22 @@ else:
                             invert_rates=params['invert_rates']
                         )
                         
-                        # Consume generator for progress updates
-                        final_result = None
-                        for update in gen:
-                            current = update.get('current', 0)
-                            total = update.get('total', 1)
-                            message = update.get('message', '')
-                            status = update.get('status', '')
-                            
-                            # Update progress bar
-                            if total > 0:
-                                progress_val = min(current / total, 1.0)
-                                progress_bar.progress(progress_val, text=f"{current}/{total}")
-                            
-                            # Update status
-                            if status == 'waiting':
-                                status_text.warning(f"⏳ {message}")
-                            elif status == 'error':
-                                status_text.error(f"❌ {message}")
-                            elif status == 'complete':
-                                status_text.success(f"✅ {message}")
-                            else:
-                                status_text.info(f"📊 {message}")
-                        
-                        # Get final result via StopIteration
-                        try:
-                            gen.send(None)
-                        except StopIteration as e:
-                            final_result = e.value
-                        
-                        # Store result and clear processing flag
-                        if final_result:
-                            st.session_state['audit_result'] = final_result
+                        if not df.empty:
+                            st.session_state['audit_result'] = (df, summary)
                             st.session_state['audit_processing'] = False
-                            progress_bar.progress(1.0, text="Complete!")
-                            import time
-                            time.sleep(0.5)  # Brief pause to show completion
                             st.rerun()
                         else:
                             st.session_state['audit_processing'] = False
-                            st.error("Audit completed but no results returned.")
-                    else:
+                            st.error("Audit returned no results. Check your file format.")
+                            
+                    except Exception as e:
                         st.session_state['audit_processing'] = False
-                        st.error("Audit logic not found")
-                        
-                except Exception as e:
-                    st.session_state['audit_processing'] = False
-                    st.error(f"Audit failed: {e}")
+                        st.error(f"Audit failed: {e}")
             
             elif 'audit_result' in st.session_state:
                 df, summary = st.session_state['audit_result']
                 
-                # Summary Metrics
+                # Summary Metrics (always shown)
                 metric_cols = st.columns(4)
                 with metric_cols[0]:
                     st.metric("📊 Total Rows", summary.get('total_rows', 0))
@@ -533,32 +560,32 @@ else:
                 # Results Table
                 if not df.empty:
                     
-                    # View Toggle
-                    
+                    # View Toggle (like Rate Extraction tab)
                     view_mode_audit = st.toggle(
                         "Summary View", 
                         key="toggle_audit",
-                        help="Switch to summary view for statistics"
+                        help="Toggle for summary statistics (Passed/Exception/Error counts)"
                     )
                     
-                    if view_mode_audit: # Summary
-                        # Simple counts summary
+                    if view_mode_audit:  # Summary View
+                        # Simple counts by Status
                         summary_counts = df['Status'].value_counts().reset_index()
                         summary_counts.columns = ['Status', 'Count']
-                        st.dataframe(summary_counts, use_container_width=True)
+                        st.dataframe(summary_counts, use_container_width=True, hide_index=True)
                         
-                    else: # Detailed
+                    else:  # Detailed View
                         st.dataframe(
                             df,
                             use_container_width=True,
                             hide_index=True,
-                            height=560  # Increased by 160px total
+                            height=400  # Match Rate Extraction tab
                         )
                     
-                    # Download Buttons
-                    if 'convert_df_to_csv' in locals():
+                    # Download Buttons (always visible)
+                    if callable(convert_df_to_csv):
+                        st.markdown('<div class="spacer-sm"></div>', unsafe_allow_html=True)
                         st.markdown("**📥 Download Audit Report**")
-                        dl_cols = st.columns([1, 1.1, 2], gap="small")  # Consistent with Tab 1
+                        dl_cols = st.columns([1, 1.1, 2], gap="small")
                         
                         csv = convert_df_to_csv(df)
                         excel = convert_df_to_excel(df)
@@ -579,26 +606,6 @@ else:
                                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                                 key="dl_excel_audit"
                             )
-                else:
-                    st.warning("No processable data in the uploaded file.")
             else:
-                # Using a single line string or manual concatenation to ensure no indentation issues
-                html_table = """
-<div class="results-placeholder">
-    <p style="margin-bottom: 15px;">Upload a file and click 'Generate Audit' to validate rates.</p>
-    <div style="width: 100%; max-width: 600px;">
-        <p style="font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; opacity: 0.9;">Required Columns:</p>
-        <table class="schema-table">
-            <thead>
-                <tr>
-                    <th>Transaction Date</th>
-                    <th>Base Currency</th>
-                    <th>Source Currency</th>
-                    <th>User Rate</th>
-                </tr>
-            </thead>
-        </table>
-    </div>
-</div>
-"""
-                st.markdown(html_table, unsafe_allow_html=True)
+                st.info("Upload a file and click **Generate Audit** to see results here.")
+
