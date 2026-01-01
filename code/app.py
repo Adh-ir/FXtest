@@ -158,8 +158,7 @@ else:
 
     # ==================== TAB 1: RATE EXTRACTION ====================
     if selected_tab == "📊 Rate Extraction":
-        tab1_placeholder = st.container()
-        with tab1_placeholder:
+
 
         col_left, col_right = st.columns([1, 1.5], gap="large")
         
