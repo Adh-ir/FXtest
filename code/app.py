@@ -62,7 +62,7 @@ st.markdown('<h1 class="gradient-title"><span class="title-fx">FX</span> <span c
 
 # Info Button Injection
 st.markdown("""
-<a href="https://twelvedata.com/docs" target="_blank" class="info-btn">
+<a href="/Help" target="_blank" class="info-btn">
     <span class="info-icon">i</span>
 </a>
 """, unsafe_allow_html=True)
@@ -231,7 +231,9 @@ else:
                 start_date = st.date_input("Start Date", key="extract_start", help="Start of historical rate range (YYYY-MM-DD)")
             with d_col2:
                 end_date = st.date_input("End Date", key="extract_end", help="End of historical rate range (YYYY-MM-DD)")
-                
+            
+            invert_rates_extraction = st.checkbox("Invert rates (1/Rate)", key="invert_extraction")
+            
             st.markdown("---")
             
             # Validation for Run
@@ -263,7 +265,7 @@ else:
                         e_date_str = end_date.strftime("%Y-%m-%d")
                         
                         if 'get_rates' in locals():
-                            df = get_rates(api_key, bases, s_date_str, e_date_str, sources)
+                            df = get_rates(api_key, bases, s_date_str, e_date_str, sources, invert=invert_rates_extraction)
                             
                             if not df.empty:
                                 st.session_state['last_result'] = df
@@ -349,14 +351,12 @@ else:
         with col_left:
             st.markdown("### 🔍 Audit Configuration")
             
-            # Threshold
-            st.markdown("""
-                <div style="background-color: rgba(255,255,255,0.4); padding: 15px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 20px;">
-                    <strong style="color: var(--color-primary);">Upload your rates file (Excel/CSV)</strong>
-                </div>
-                """, unsafe_allow_html=True)
-                
-            uploaded_file = st.file_uploader("Upload your rates file (Excel/CSV)", type=['xlsx', 'xls', 'csv'], label_visibility="collapsed", key="audit_file")
+            # File Upload
+            uploaded_file = st.file_uploader(
+                "Upload your rates file (Excel/CSV)",
+                type=['xlsx', 'xls', 'csv'],
+                key="audit_file"
+            )
             
             st.markdown("#### Configuration")
             
@@ -543,28 +543,17 @@ else:
                 html_table = """
 <div class="results-placeholder">
     <p style="margin-bottom: 15px;">Upload a file and click 'Generate Audit' to validate rates.</p>
-    <div style="width: 100%; max-width: 400px;">
+    <div style="width: 100%; max-width: 600px;">
         <p style="font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; opacity: 0.9;">Required Columns:</p>
         <table class="schema-table">
             <thead>
                 <tr>
-                    <th>Column Name</th>
+                    <th>Transaction Date</th>
+                    <th>Base Currency</th>
+                    <th>Source Currency</th>
+                    <th>User Rate</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Date</strong></td>
-                </tr>
-                <tr>
-                    <td><strong>Base Currency</strong></td>
-                </tr>
-                <tr>
-                    <td><strong>Source Currency</strong></td>
-                </tr>
-                <tr>
-                    <td><strong>User Rate</strong></td>
-                </tr>
-            </tbody>
         </table>
     </div>
 </div>
