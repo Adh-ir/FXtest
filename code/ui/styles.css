@@ -4,6 +4,7 @@
 
 /* Design System Variables */
 :root {
+  color-scheme: light;
   /* Glass Effects */
   --glass-bg: rgba(255, 255, 255, 0.25);
   --glass-border: rgba(255, 255, 255, 0.5);
