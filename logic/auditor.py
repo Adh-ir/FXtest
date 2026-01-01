@@ -367,6 +367,7 @@ def run_audit(
     """
     Runs the audit synchronously (for simple scripts and Streamlit).
     Returns the result directly without using StopIteration.
+    Encapsulates generator logic for simpler consumption.
     """
     gen = process_audit_file(file, date_fmt, threshold, api_key, testing_mode, invert_rates)
     
