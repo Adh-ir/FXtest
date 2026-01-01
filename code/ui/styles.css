@@ -547,3 +547,12 @@ div[data-baseweb="select"]>div:focus-within {
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] small {
   font-size: 0.45rem !important;
 }
+/* Hide Sidebar Navigation */
+[data-testid="stSidebarNav"] {
+  display: none !important;
+}
+
+[data-testid="stSidebar"] {
+  display: none !important;
+}
+
