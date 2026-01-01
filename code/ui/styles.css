@@ -531,8 +531,8 @@ div[data-baseweb="select"]>div:focus-within {
 
 /* File Uploader Styling */
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] {
-  padding: 25px 20px !important;
-  /* Increased padding for larger dropzone */
+  padding: 20px 10px !important;
+  /* Kept vertical padding, compact horizontal */
 }
 
 /* Reduce margin below file uploader to close gap with template button */
@@ -542,20 +542,22 @@ div[data-baseweb="select"]>div:focus-within {
 
 /* "Drag and drop file here" text */
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"]>div>span {
-  font-size: 0.9rem !important;
-  /* Increased from 0.65rem */
+  font-size: 0.85rem !important;
+  /* Smaller text to ensure single line */
+  white-space: nowrap !important;
 }
 
 /* "Browse files" button text */
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button {
-  font-size: 0.9rem !important;
-  padding: 8px 20px !important;
+  font-size: 0.8rem !important;
+  /* Smaller button text */
+  padding: 6px 14px !important;
+  /* Smaller button padding */
 }
 
 /* File size limit text */
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] small {
   font-size: 0.6rem !important;
-  /* Slightly larger */
 }
 
 /* Template Download Button - Smaller (approx 30%) */

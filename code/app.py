@@ -357,7 +357,7 @@ else:
 
     # ==================== TAB 2: AUDIT & RECONCILIATION ====================
     with tab2:
-        col_left, col_right = st.columns([1.2, 1.3], gap="large")
+        col_left, col_right = st.columns([1, 1.5], gap="large")
         
         # --- LEFT PANE (Audit Inputs) ---
         with col_left:
