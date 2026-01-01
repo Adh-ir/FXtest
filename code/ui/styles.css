@@ -437,6 +437,7 @@ button[kind="primary"]:hover {
   margin-top: 0px;
   /* Reduced by 5px more to expand upwards */
   margin-bottom: 40px;
+  flex-direction: column;
 }
 
 .results-placeholder p {
@@ -444,6 +445,35 @@ button[kind="primary"]:hover {
   opacity: 0.7;
   font-size: 1rem;
   text-align: center;
+}
+
+/* Schema Table Styling */
+.schema-table {
+  width: 100%;
+  margin-top: 15px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.schema-table th,
+.schema-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(6, 111, 69, 0.2);
+  color: var(--text-color);
+}
+
+.schema-table th {
+  background-color: rgba(6, 111, 69, 0.1);
+  font-weight: 700;
+  color: var(--color-secondary);
+}
+
+.schema-table tr:last-child td {
+  border-bottom: none;
 }
 
 /* Dropdown Menu Styling */
@@ -514,5 +544,5 @@ div[data-baseweb="select"]>div:focus-within {
 
 /* File size limit text */
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] small {
-  font-size: 0.6rem !important;
+  font-size: 0.45rem !important;
 }

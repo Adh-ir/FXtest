@@ -524,6 +524,36 @@ else:
             else:
                 st.markdown('''
                     <div class="results-placeholder">
-                        <p>Upload a file and click 'Generate Audit' to validate rates.</p>
+                        <p style="margin-bottom: 15px;">Upload a file and click 'Generate Audit' to validate rates.</p>
+                        
+                        <div style="width: 100%; max-width: 500px;">
+                            <p style="font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; opacity: 0.9;">Expected File Columns:</p>
+                            <table class="schema-table">
+                                <thead>
+                                    <tr>
+                                        <th>Column Information</th>
+                                        <th>Accepted Header Names (Examples)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Date</strong></td>
+                                        <td>Date, Transaction Date, Trade Date</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Base Currency</strong></td>
+                                        <td>Base, Base Currency, From</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Source Currency</strong></td>
+                                        <td>Source, Source Currency, To</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Exchange Rate</strong></td>
+                                        <td>User Rate, Rate, Exchange Rate</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 ''', unsafe_allow_html=True)
