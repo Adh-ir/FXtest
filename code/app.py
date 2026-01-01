@@ -293,18 +293,25 @@ else:
                 # Fixed height dataframe with internal scroll
                 
                 # View Toggle
-                is_summary = st.session_state.get('toggle_extraction', False)
-                toggle_label = "Switch to Detailed View" if is_summary else "Switch to Summary View"
-                
                 view_mode = st.toggle(
-                    toggle_label, 
+                    "Summary View", 
                     key="toggle_extraction", 
-                    help="Switch to summary view for statistics"
+                    help="Toggle for summary statistics (Mean, Std Dev, CV, High, Low)"
                 )
                 
                 if view_mode: # Summary
-                    summary_df = res_df.groupby(['Currency Base', 'Currency Source'])['Exchange Rate'].mean().reset_index()
-                    summary_df.columns = ['Base', 'Source', 'Average Rate']
+                    # Detailed Statistics
+                    summary_df = res_df.groupby(['Currency Base', 'Currency Source'])['Exchange Rate'].agg(['mean', 'std', 'min', 'max']).reset_index()
+                    
+                    # Formatting and Renaming (agg returns: mean, std, min, max)
+                    summary_df.columns = ['Base', 'Source', 'Mean', 'Std Dev', 'Low', 'High']
+                    
+                    # Note: CV must be added AFTER renaming
+                    summary_df['CV'] = summary_df['Std Dev'] / summary_df['Mean']
+                    
+                    # Reorder columns for readability
+                    summary_df = summary_df[['Base', 'Source', 'Mean', 'Std Dev', 'CV', 'High', 'Low']]
+                    
                     st.dataframe(summary_df, use_container_width=True)
                 else: # Detailed
                     st.dataframe(
@@ -367,15 +374,30 @@ else:
             # create_template_excel imported at top level
             template_bytes = create_template_excel()
             
-            st.download_button(
-                label="⬇️ Download Example Template",
-                data=template_bytes,
-                file_name="fx_audit_template.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key="dl_template",
-                help="Download a blank Excel file with the required column headers.",
-                use_container_width=True
-            )
+            # Inject inline styling for this specific button
+            st.markdown("""
+            <style>
+            .template-dl-btn button {
+                font-size: 0.65rem !important;
+                padding: 3px 10px !important;
+                min-height: unset !important;
+                height: auto !important;
+                width: auto !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
+            with st.container():
+                st.markdown('<div class="template-dl-btn">', unsafe_allow_html=True)
+                st.download_button(
+                    label="⬇️ Download Example Template",
+                    data=template_bytes,
+                    file_name="fx_audit_template.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key="dl_template",
+                    help="Download a blank Excel file with the required column headers."
+                )
+                st.markdown('</div>', unsafe_allow_html=True)
             
             st.markdown("#### Configuration")
             
