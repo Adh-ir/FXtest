@@ -40,7 +40,7 @@ if 'load_css' in locals():
 st.markdown('<h1 class="gradient-title"><span class="title-fx">FX</span> <span class="title-test">Test</span> <span style="font-size: 2rem; vertical-align: middle; opacity: 0.7;">| Help & Information</span></h1>', unsafe_allow_html=True)
 
 # Main content container matching app styling
-st.markdown('<div class="results-container" style="height: auto; min-height: 70vh;">', unsafe_allow_html=True)
+# st.markdown('<div class="results-container" style="height: auto; min-height: 70vh;">', unsafe_allow_html=True) # REMOVED based on feedback
 
 # --- SECTIONS ---
 
@@ -128,6 +128,20 @@ with st.expander("See Validation Details"):
     The API is validated for use, with particular reliability for standard banking cross-rates.
     """)
 
+with st.expander("👨‍💻 Developer System Verification"):
+    st.info("""
+    **Developer System Verification Tests**
+    
+    The following automated tests are executed to ensure system stability and correctness:
+    
+    *   **Unit Tests**:
+        *   `test_api_client.py`: Verifies Twelve Data API connectivity and error handling.
+        *   `test_auditor.py`: Validates the logic for comparing user files against API rates.
+        *   `test_data_processor.py`: Checks data cleaning and normalization routines.
+    *   **Utility Tests**:
+        *   `test_utils.py`: Ensures CSV/Excel conversion and date parsing work correctly.
+    """)
+
 st.markdown("---")
 
 # 5. Getting API Keys
@@ -142,4 +156,4 @@ st.markdown("""
 3.  **Input**: Copy the key and paste it into the secure prompt when launching this app.
 """)
 
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True) # End of removed container
