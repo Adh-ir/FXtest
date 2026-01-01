@@ -288,7 +288,10 @@ section[data-testid="stMain"]>.block-container {
   border: 10px solid #FFFFFF !important;
   border-radius: 35px !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  min-height: 70vh !important;
+  height: auto !important;
+  /* Allow content to determine height */
+  min-height: 85vh !important;
+  /* Increased to fit more content */
   padding-bottom: 80px !important;
 }
 
@@ -597,6 +600,7 @@ div[data-testid="stAlert"] p {
 [data-testid="stSidebarCollapsedControl"] {
   display: none !important;
 }
+
 /* Help Page Specific Container */
 .help-container {
   background: rgba(255, 255, 255, 0.6);
@@ -608,4 +612,3 @@ div[data-testid="stAlert"] p {
   margin-top: 20px;
   margin-bottom: 40px;
 }
-
