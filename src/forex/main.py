@@ -19,24 +19,24 @@ import streamlit as st
 # --- PATH CONFIGURATION ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-# --- IMPORTS ---
+# --- PAGE CONFIGURATION (MUST BE FIRST ST COMMAND) ---
+st.set_page_config(
+    page_title="FX-Test",
+    page_icon=os.path.join(current_dir, "assets", "favicon_optimized.png"),
+    layout="wide",
+)
+
+# --- IMPORTS (after set_page_config so errors can be displayed) ---
+_LOGIC_AVAILABLE = False
+_IMPORT_ERROR = None
+
 try:
     from forex.auth import get_api_key, get_cookie_manager, set_api_key
     from forex.ui.tabs import audit, extraction
 
     _LOGIC_AVAILABLE = True
 except ImportError as e:
-    st.error(f"Import Error: {e}")
-    st.warning("Backend modules not found. Application may not work.")
-    _LOGIC_AVAILABLE = False
-
-
-# --- PAGE CONFIGURATION ---
-st.set_page_config(
-    page_title="FX-Test",
-    page_icon=os.path.join(current_dir, "assets", "favicon_optimized.png"),
-    layout="wide",
-)
+    _IMPORT_ERROR = str(e)
 
 
 # --- CSS LOADING ---
@@ -51,6 +51,13 @@ def load_css(file_name: str) -> None:
 
 
 load_css("ui/styles.css")
+
+# --- DISPLAY DEFERRED IMPORT ERRORS ---
+if _IMPORT_ERROR:
+    st.error(f"Import Error: {_IMPORT_ERROR}")
+    st.warning("Backend modules not found. Please ensure the package is installed.")
+    st.info("Run: `pip install -e .` in the project root directory.")
+    st.stop()
 
 
 # --- ACCESSIBILITY ---
