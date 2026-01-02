@@ -295,7 +295,11 @@ section[data-testid="stMain"]>.block-container {
   padding-bottom: 80px !important;
 }
 
-
+/* Reduce space between Title and Tabs */
+div[data-testid="stTabs"] {
+  margin-top: -50px !important;
+  /* Reverted to -30px then increased to -50px */
+}
 
 /* Prevent layout shift on date/input interaction */
 div[data-testid="stDateInput"] {
@@ -607,34 +611,4 @@ div[data-testid="stAlert"] p {
   border: 1px solid rgba(255, 255, 255, 0.5);
   margin-top: 20px;
   margin-bottom: 40px;
-}
-
-/* 
-   -----------------------------------------------------------------------------
-   TAB NAVIGATION STYLING (Moved from inline app.py to prevent layout shift)
-   -----------------------------------------------------------------------------
-*/
-
-/* Tab Navigation - Simple and stable */
-div.row-widget.stRadio {
-  margin-top: -50px !important;
-  margin-bottom: 20px !important;
-}
-
-div.row-widget.stRadio>div>label {
-  background-color: transparent;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  padding: 5px 15px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-div.row-widget.stRadio>div>label:hover {
-  background-color: #f0f2f6;
-}
-
-div.row-widget.stRadio>div>label[data-testid="stMarkdownContainer"]>p {
-  font-size: 1.1rem;
-  font-weight: 600;
 }

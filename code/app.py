@@ -54,7 +54,6 @@ TOP_CURRENCIES = list(UI_CONFIG.TOP_CURRENCIES) if 'UI_CONFIG' in dir() else ['Z
 st.set_page_config(page_title="FX-Test", page_icon=os.path.join(current_dir, "favicon_optimized.png"), layout="wide")
 
 # Load Styles
-@st.cache_resource
 def load_css(file_name):
     # Fix: use absolute path based on current file location
     # This resolves the FileNotFoundError on Streamlit Cloud
@@ -122,7 +121,42 @@ else:
         st.session_state['nav_radio'] = "📊 Rate Extraction"
         
     # CSS to style the radio button like tabs
-
+    st.markdown("""
+    <style>
+    /* Aggressive Spacing Reduction */
+    div.row-widget.stRadio {
+        margin-top: -65px !important;
+    }
+    
+    /* Ensure content stays within shell by adding massive bottom padding */
+    section[data-testid="stMain"] > .block-container {
+        padding-bottom: 120px !important;
+    }
+    
+    div.row-widget.stRadio > div {
+        flex-direction: row;
+        gap: 20px;
+        border-bottom: 2px solid #f0f2f6;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    div.row-widget.stRadio > div > label {
+        background-color: transparent;
+        border: 1px solid transparent;
+        border-radius: 5px;
+        padding: 5px 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    div.row-widget.stRadio > div > label:hover {
+        background-color: #f0f2f6;
+    }
+    div.row-widget.stRadio > div > label[data-testid="stMarkdownContainer"] > p {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
     selected_tab = st.radio(
         "Navigation", 
@@ -403,7 +437,17 @@ else:
             template_bytes = create_template_excel()
             
             # Inject CSS for smaller font/height (targeting download button after file uploader)
-
+            st.markdown("""
+            <style>
+            /* Target the template download button specifically */
+            div[data-testid="stVerticalBlock"] > div[data-testid="element-container"]:has(+ div[data-testid="element-container"] [data-testid="stMarkdown"]) [data-testid="stDownloadButton"] button,
+            [data-testid="stDownloadButton"][data-testid-key="dl_template"] button {
+                font-size: 0.7rem !important;
+                padding: 4px 12px !important;
+                min-height: unset !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
             
             st.download_button(
                 label="⬇️ Download Example Template",
