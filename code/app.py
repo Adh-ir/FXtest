@@ -130,7 +130,12 @@ else:
     
     /* Ensure content stays within shell by adding massive bottom padding */
     section[data-testid="stMain"] > .block-container {
-        padding-bottom: 120px !important;
+        padding-bottom: 150px !important;
+    }
+    
+    /* Pull download buttons closer to table */
+    .audit-download-section {
+        margin-top: -15px !important;
     }
     
     div.row-widget.stRadio > div {
@@ -585,7 +590,7 @@ else:
                     
                     # Download Buttons (always visible)
                     if callable(convert_df_to_csv):
-                        st.markdown('<div class="spacer-sm"></div>', unsafe_allow_html=True)
+                        st.markdown('<div class="audit-download-section"></div>', unsafe_allow_html=True)
                         
                         dl_cols = st.columns([1, 1.1, 2], gap="small")
                         
