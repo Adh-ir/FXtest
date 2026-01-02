@@ -128,11 +128,6 @@ else:
         margin-top: -65px !important;
     }
     
-    /* Ensure content stays within shell by adding massive bottom padding */
-    section[data-testid="stMain"] > .block-container {
-        padding-bottom: 200px !important;
-    }
-    
     /* Pull download buttons closer to table */
     .audit-download-section {
         margin-top: -15px !important;

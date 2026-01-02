@@ -281,19 +281,17 @@ div[data-testid="stTextInput"] div[data-baseweb="input"]:focus-within {
 /* Shell Structure - Increased Specificity */
 section[data-testid="stMain"]>.block-container {
   max-width: 1200px !important;
-  padding: 15px 30px 0px 30px !important;
-  /* Reverted to 20px, then reduced to 15px */
+  padding: 15px 30px 80px 30px !important;
+  /* Top, Right, Bottom, Left padding */
   margin-top: 30px !important;
+  margin-bottom: 60px !important;
+  /* Add bottom margin for visual clearance */
   background: rgba(255, 255, 255, 0.45);
   border: 10px solid #FFFFFF !important;
   border-radius: 35px !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   height: auto !important;
-  /* Allow content to determine height */
-  min-height: 85vh !important;
-  /* Increased to fit more content */
-  padding-bottom: 200px !important;
-  /* Massive padding to ensure download buttons stay inside */
+  /* Allow content to determine height - no min-height constraint */
 }
 
 /* Reduce space between Title and Tabs */
