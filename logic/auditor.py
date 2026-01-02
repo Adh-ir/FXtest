@@ -362,20 +362,35 @@ def run_audit(
     threshold: float = 5.0,
     api_key: str = "",
     testing_mode: bool = True,
-    invert_rates: bool = False
+    invert_rates: bool = False,
+    progress_callback: Optional[Callable[[str], None]] = None
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """
     Runs the audit synchronously (for simple scripts and Streamlit).
     Returns the result directly without using StopIteration.
     Encapsulates generator logic for simpler consumption.
+    Now supports optional progress_callback to report status strings.
     """
     gen = process_audit_file(file, date_fmt, threshold, api_key, testing_mode, invert_rates)
     
     result = None
+    
+    # Iterate through the generator to drive execution
     for update in gen:
-        logger.info(update['message'])
-        # Capture result from the 'complete' message
+        # Check if we have a progress message to report
+        if progress_callback and 'message' in update:
+            # Format: "Step X/Y: Message" or just "Message"
+            # If current/total are present, we can format a nice string
+            current = update.get('current')
+            total = update.get('total')
+            msg = update.get('message', '')
+            
+            if current is not None and total is not None and total > 0:
+                progress_callback(f"processing {current}/{total}: {msg}")
+            else:
+                progress_callback(msg)
+                
         if update.get('status') == 'complete' and 'result' in update:
             result = update['result']
-    
+            
     return result if result else (pd.DataFrame(), {})

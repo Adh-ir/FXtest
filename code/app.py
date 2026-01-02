@@ -467,7 +467,8 @@ else:
             with col_t:
                 threshold = st.slider("Variance Threshold (%)", 0.0, 10.0, 5.0, 0.1, key="audit_threshold")
 
-            invert_rates_audit = st.checkbox("Invert rates (Use 1/API Rate)", key="invert_audit")
+            # invert_rates_audit = st.checkbox("Invert rates (Use 1/API Rate)", key="invert_audit")
+            invert_rates_audit = False # Hardcoded to False per user request
             
             testing_mode = st.checkbox("🧪 Testing Mode (Mock API)", value=True, help="When enabled, uses mock rates instead of real API calls. Recommended for initial testing.", key="audit_test_mode")
             
@@ -527,6 +528,12 @@ else:
                         # Import run_audit
                         from logic.auditor import run_audit
                         
+                        # Progress Placeholder
+                        progress_text = st.empty()
+                        
+                        def update_progress(msg):
+                            progress_text.text(f"⏳ {msg}")
+                        
                         # Run audit synchronously
                         df, summary = run_audit(
                             file=file_data,
@@ -534,7 +541,8 @@ else:
                             threshold=params['threshold'],
                             api_key=api_key,
                             testing_mode=params['testing_mode'],
-                            invert_rates=params['invert_rates']
+                            invert_rates=params['invert_rates'],
+                            progress_callback=update_progress
                         )
                         
                         if not df.empty:
