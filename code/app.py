@@ -54,6 +54,7 @@ TOP_CURRENCIES = list(UI_CONFIG.TOP_CURRENCIES) if 'UI_CONFIG' in dir() else ['Z
 st.set_page_config(page_title="FX-Test", page_icon=os.path.join(current_dir, "favicon_optimized.png"), layout="wide")
 
 # Load Styles
+@st.cache_resource
 def load_css(file_name):
     # Fix: use absolute path based on current file location
     # This resolves the FileNotFoundError on Streamlit Cloud
