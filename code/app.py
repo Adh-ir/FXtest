@@ -123,10 +123,14 @@ else:
     # CSS to style the radio button like tabs
     st.markdown("""
     <style>
-    /* Aggressive Spacing Reduction - Increased to -95px */
+    /* Aggressive Spacing Reduction - Using Position Relative to prevent layout shift */
     div.row-widget.stRadio {
-        margin-top: -95px !important;
-        margin-bottom: 10px !important;
+        position: relative !important;
+        top: -110px !important;
+        margin-top: 0px !important;
+        margin-bottom: -90px !important;
+        background-color: transparent !important;
+        z-index: 100 !important;
     }
     
     /* Ensure content stays within shell by adding massive bottom padding */

@@ -295,11 +295,7 @@ section[data-testid="stMain"]>.block-container {
   padding-bottom: 80px !important;
 }
 
-/* Reduce space between Title and Tabs */
-div[data-testid="stTabs"] {
-  margin-top: -50px !important;
-  /* Reverted to -30px then increased to -50px */
-}
+
 
 /* Prevent layout shift on date/input interaction */
 div[data-testid="stDateInput"] {
