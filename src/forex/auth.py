@@ -1,18 +1,11 @@
-import streamlit as st
-import extra_streamlit_components as stx
 import datetime
-import sys
-import os
-from typing import Optional, Any
 
-# Add parent directory to path for logic imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(os.path.dirname(current_dir))
-if parent_dir not in sys.path:
-    sys.path.insert(0, parent_dir)
+import extra_streamlit_components as stx
+import streamlit as st
 
 try:
-    from logic.config import CACHE_CONFIG
+    from forex.config import CACHE_CONFIG
+
     EXPIRY_DAYS = CACHE_CONFIG.COOKIE_EXPIRY_DAYS
 except ImportError:
     EXPIRY_DAYS = 7  # Fallback
@@ -20,13 +13,15 @@ except ImportError:
 # Cookie Manager Key
 COOKIE_NAME = "twelve_data_api_key"
 
+
 def get_cookie_manager() -> stx.CookieManager:
     """
     Returns a CookieManager instance with a unique key to avoid widget conflicts.
     """
     return stx.CookieManager(key="fx_cookie_manager")
 
-def get_api_key(cookie_manager: stx.CookieManager) -> Optional[str]:
+
+def get_api_key(cookie_manager: stx.CookieManager) -> str | None:
     """
     Retrieve API key from Session State or Cookie.
     Returns None if user has logged out or no valid key exists.
@@ -34,11 +29,11 @@ def get_api_key(cookie_manager: stx.CookieManager) -> Optional[str]:
     # Check if user has explicitly logged out (force show modal)
     if st.session_state.get("force_logout", False):
         return None
-    
+
     # 1. Check Session State first (fastest)
     if "api_key" in st.session_state and st.session_state["api_key"]:
         return st.session_state["api_key"]
-    
+
     # 2. Check Cookie (may be async-loaded)
     try:
         cookie_val = cookie_manager.get(COOKIE_NAME)
@@ -48,8 +43,9 @@ def get_api_key(cookie_manager: stx.CookieManager) -> Optional[str]:
             return cookie_val.strip()
     except Exception:
         pass  # Cookie manager may not be ready yet
-    
+
     return None
+
 
 def set_api_key(cookie_manager: stx.CookieManager, key: str) -> None:
     """
@@ -59,17 +55,18 @@ def set_api_key(cookie_manager: stx.CookieManager, key: str) -> None:
     # Clear logout flag if it was set
     if "force_logout" in st.session_state:
         del st.session_state["force_logout"]
-    
+
     # Save to session
     st.session_state["api_key"] = key.strip()
-    
+
     # Save to cookie
     expires = datetime.datetime.now() + datetime.timedelta(days=EXPIRY_DAYS)
     try:
         cookie_manager.set(COOKIE_NAME, key.strip(), expires_at=expires)
     except Exception:
         pass  # Cookie save may fail but session state is primary
-    
+
+
 def clear_api_key(cookie_manager: stx.CookieManager) -> None:
     """
     Remove API key from everything and set force_logout flag.
@@ -77,11 +74,11 @@ def clear_api_key(cookie_manager: stx.CookieManager) -> None:
     """
     # Set force logout flag FIRST (most important)
     st.session_state["force_logout"] = True
-    
+
     # Clear session state
     if "api_key" in st.session_state:
         del st.session_state["api_key"]
-    
+
     # Try to delete cookie (may or may not work)
     try:
         cookie_manager.delete(COOKIE_NAME)

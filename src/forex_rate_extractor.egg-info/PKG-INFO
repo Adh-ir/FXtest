@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: forex-rate-extractor
+Version: 0.1.0
+Summary: Forex Rate Extractor Tool
+Author-email: Adhir Singh <adhir@example.com>
+Requires-Python: >=3.10
+Requires-Dist: streamlit>=1.30.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: openpyxl>=3.1.0
+Requires-Dist: xlsxwriter>=3.1.0
+Requires-Dist: extra-streamlit-components>=0.1.70
