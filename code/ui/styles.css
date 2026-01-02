@@ -283,7 +283,8 @@ section[data-testid="stMain"]>.block-container {
   max-width: 1200px !important;
   padding: 15px 30px 0px 30px !important;
   /* Reverted to 20px, then reduced to 15px */
-  margin-top: 30px !important;
+  margin-top: 140px !important;
+  /* Increased to offset fixed header+nav */
   background: rgba(255, 255, 255, 0.45);
   border: 10px solid #FFFFFF !important;
   border-radius: 35px !important;
@@ -615,14 +616,19 @@ div[data-testid="stAlert"] p {
    -----------------------------------------------------------------------------
 */
 
-/* Aggressive Spacing Reduction - Using Position Relative to prevent layout shift */
+/* Fixed Navigation Position - COMPLETELY decoupled from document flow */
 div.row-widget.stRadio {
-  position: relative !important;
-  top: -110px !important;
-  margin-top: 0px !important;
-  margin-bottom: -90px !important;
-  background-color: transparent !important;
-  z-index: 100 !important;
+  position: fixed !important;
+  top: 125px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 999 !important;
+  margin: 0 !important;
+  padding: 10px 30px !important;
+  background-color: rgba(216, 238, 225, 0.95) !important;
+  border-radius: 10px !important;
+  width: auto !important;
+  max-width: 1140px !important;
 }
 
 div.row-widget.stRadio>div {
