@@ -31,9 +31,7 @@ def print_header(title: str) -> None:
     print(f"{'=' * 60}{RESET}\n")
 
 
-def run_command(
-    command: list[str], description: str, continue_on_error: bool = False
-) -> int:
+def run_command(command: list[str], description: str, continue_on_error: bool = False) -> int:
     print(f"{YELLOW}Running {description}...{RESET}")
     try:
         result = subprocess.run(
@@ -47,9 +45,7 @@ def run_command(
             print(f"{RED}✗ {description} failed.{RESET}")
         return result.returncode
     except FileNotFoundError:
-        print(
-            f"{RED}Error: Command not found: {command[0]}. Please install dev dependencies.{RESET}"
-        )
+        print(f"{RED}Error: Command not found: {command[0]}. Please install dev dependencies.{RESET}")
         return 1
 
 
@@ -99,12 +95,7 @@ def main() -> None:
     print_header("Forex Rate Extractor - Quality Assurance Gate")
 
     # 1. Linting & Formatting (Ruff)
-    if (
-        run_command(
-            [sys.executable, "-m", "ruff", "check", "."], "Linting Check (Ruff)"
-        )
-        != 0
-    ):
+    if run_command([sys.executable, "-m", "ruff", "check", "."], "Linting Check (Ruff)") != 0:
         failures.append("Linting")
 
     if (
@@ -123,12 +114,7 @@ def main() -> None:
     # 3. Security (Bandit)
     # -r for recursive, -c to point to config file if we had one, but defaults are ok.
     # LLM Note: Creating a bandit.yaml isn't strictly requested but good practice. using defaults for now.
-    if (
-        run_command(
-            [sys.executable, "-m", "bandit", "-r", ".", "-q"], "Security Scan (Bandit)"
-        )
-        != 0
-    ):
+    if run_command([sys.executable, "-m", "bandit", "-r", ".", "-q"], "Security Scan (Bandit)") != 0:
         failures.append("Security Scan")
 
     # 4. Tests (Pytest)

@@ -25,4 +25,5 @@ tests/test_data_processor.py
 tests/test_enhancements.py
 tests/test_facade.py
 tests/test_main.py
+tests/test_redis_integration.py
 tests/test_utils.py

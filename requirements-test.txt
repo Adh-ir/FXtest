@@ -10,3 +10,8 @@ ruff>=0.1.0
 pre-commit>=3.6.0
 types-requests
 types-PyYAML
+
+# Integration testing
+testcontainers[redis]>=4.0.0
+redis>=5.0.0
+

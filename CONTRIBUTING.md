@@ -45,7 +45,7 @@ pytest -m "not integration"
 
 To run with coverage:
 ```bash
-pytest --cov=logic tests/
+pytest --cov=forex tests/
 ```
 
 ### Writing Tests
@@ -72,9 +72,14 @@ pytest --cov=logic tests/
 
 ## 🤝 Architecture Overview
 
-*   **Frontend**: `code/app.py` (Streamlit)
-*   **Business Logic**: `logic/` (Python modules)
-    *   `facade.py`: Main entry point for the UI.
+*   **Frontend**: `src/forex/main.py` (Streamlit)
+*   **Business Logic**: `src/forex/` (Python modules)
+    *   `facade.py`: Main entry point for rate fetching with caching.
     *   `api_client.py`: Handles Twelve Data API interactions and rate limiting.
     *   `auditor.py`: Logic for file processing and reconciliation.
-*   **Data Flow**: User Input -> Streamlit UI -> Facade -> API Client -> Twelve Data API.
+    *   `data_processor.py`: Data transformation and cross-rate calculation.
+    *   `cache.py`: Cache abstraction (In-memory/Redis).
+    *   `config.py`: Centralized configuration values.
+*   **Data Flow**: User Input → Streamlit UI → Facade → API Client → Twelve Data API.
+*   **Caching**: Redis (production) or In-Memory (development) via `cache.py`.
+

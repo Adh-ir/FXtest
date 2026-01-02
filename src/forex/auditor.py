@@ -78,9 +78,7 @@ def validate_schema(df: pd.DataFrame) -> tuple[bool, dict[str, str], str]:
             missing_fields.append(required)
 
     if missing_fields:
-        missing_desc = ", ".join(
-            [f"{k} (e.g., {COLUMN_MAPPINGS[k][0]})" for k in missing_fields]
-        )
+        missing_desc = ", ".join([f"{k} (e.g., {COLUMN_MAPPINGS[k][0]})" for k in missing_fields])
         error_msg = f"Missing required columns. Expected one of each: {missing_desc}"
         return False, {}, error_msg
 
