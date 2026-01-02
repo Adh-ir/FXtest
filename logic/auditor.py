@@ -114,13 +114,20 @@ def _fetch_rate_raw(api_key: str, base: str, source: str, date_str: str) -> Opti
 def _fetch_rate_with_fallback(api_key: str, base: str, source: str, date_str: str) -> Optional[float]:
     """
     Fetches rate with a 3-day lookback fallback for missing data (e.g. weekends).
+    IMPORTANT: Lookback is DISABLED for current date (today) to avoid stale data.
     """
     # 1. Try exact date
     rate = _fetch_rate_raw(api_key, base, source, date_str)
     if rate is not None:
         return rate
+    
+    # 2. Check if requested date is today - if so, skip lookback
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    if date_str == today_str:
+        logger.info(f"Requested date is today ({today_str}). Skipping lookback to avoid stale data.")
+        return None
         
-    # 2. Lookback up to 3 days
+    # 3. Lookback up to 3 days (only for historical dates)
     try:
         dt = datetime.strptime(date_str, "%Y-%m-%d")
         for i in range(1, 4):

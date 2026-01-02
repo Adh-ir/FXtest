@@ -166,11 +166,14 @@ class DataProcessor:
         fill_index = None
         if start_date and end_date:
             try:
-                # Cap end_date at today to prevent future projection
+                # Cap end_date at YESTERDAY to prevent forward-filling into today
+                # Today's rate should either be fetched directly or show as unavailable
                 req_end = pd.to_datetime(end_date)
                 today = pd.to_datetime(datetime.now().date())
+                yesterday = today - pd.Timedelta(days=1)
                 
-                final_end = min(req_end, today)
+                # Use the earlier of: requested end, or yesterday (never include today in ffill)
+                final_end = min(req_end, yesterday)
                 start_dt = pd.to_datetime(start_date)
                 
                 if start_dt <= final_end:
