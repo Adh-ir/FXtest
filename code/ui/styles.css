@@ -374,8 +374,6 @@ div[data-testid="stDownloadButton"] button:hover,
   border-bottom: 2px solid var(--color-secondary) !important;
 }
 
-/* (Duplicate removed - consolidated above) */
-
 .results-container::-webkit-scrollbar {
   width: 8px;
 }
@@ -529,8 +527,6 @@ div[data-baseweb="select"]>div:focus-within {
   box-shadow: 0 0 0 1px #5ddf79 !important;
 }
 
-/* End of Download Button Styling */
-
 /* File Uploader Styling */
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] {
   padding: 20px 10px !important;
@@ -610,4 +606,50 @@ div[data-testid="stAlert"] p {
   border: 1px solid rgba(255, 255, 255, 0.5);
   margin-top: 20px;
   margin-bottom: 40px;
+}
+
+/* --- ACCESSIBILITY ENHANCEMENTS --- */
+
+/* Visible Focus Indicators for Keyboard Users */
+:focus-visible {
+  outline: 3px solid var(--color-secondary) !important;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Screen Reader Only Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Respect User Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .stApp {
+    animation: none !important;
+  }
+
+  .info-btn,
+  button,
+  .stDownloadButton button {
+    transition: none !important;
+    transform: none !important;
+  }
 }

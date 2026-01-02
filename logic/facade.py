@@ -1,16 +1,56 @@
+"""
+Facade Module
+
+High-level API for fetching Forex rates. Provides caching and abstraction
+over the TwelveDataClient and DataProcessor.
+
+NOTE: This module is framework-agnostic. Caching uses functools.lru_cache
+for portability. When used within Streamlit, the app.py layer can add
+additional st.cache_data decorators if needed.
+"""
+
 import pandas as pd
-import streamlit as st
+from functools import lru_cache
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from .api_client import TwelveDataClient
 from .data_processor import DataProcessor
 from .config import CACHE_CONFIG
 
-# Cache for configured duration
-@st.cache_data(ttl=CACHE_CONFIG.RATE_TTL_SECONDS, show_spinner=False)
-def _fetch_rates_cached(api_key: str, base_currencies: List[str], start_date: str, end_date: str, target_currencies: List[str] = None) -> pd.DataFrame:
+
+def _create_cache_key(api_key: str, base_currencies: List[str], start_date: str, 
+                      end_date: str, target_currencies: Optional[List[str]]) -> Tuple:
+    """Creates a hashable cache key from the request parameters."""
+    return (
+        api_key,
+        tuple(sorted(base_currencies)),
+        start_date,
+        end_date,
+        tuple(sorted(target_currencies)) if target_currencies else None
+    )
+
+
+# In-memory cache for rate data
+_rates_cache: dict = {}
+_rates_cache_timestamps: dict = {}
+
+# In-memory cache for currency pairs
+_currencies_cache: dict = {}
+_currencies_cache_timestamps: dict = {}
+
+
+def _is_cache_valid(cache_timestamps: dict, key: Tuple, ttl_seconds: int) -> bool:
+    """Check if a cache entry is still valid based on TTL."""
+    if key not in cache_timestamps:
+        return False
+    cache_time = cache_timestamps[key]
+    return (datetime.now() - cache_time).total_seconds() < ttl_seconds
+
+
+def _fetch_rates_internal(api_key: str, base_currencies: List[str], start_date: str, 
+                          end_date: str, target_currencies: List[str] = None) -> pd.DataFrame:
     """
-    Internal cached function for fetching Forex rates.
+    Internal function for fetching Forex rates.
     Does NOT apply inversion - that is handled by the caller.
     """
     # 1. Setup
@@ -38,7 +78,8 @@ def _fetch_rates_cached(api_key: str, base_currencies: List[str], start_date: st
     return final_df
 
 
-def get_rates(api_key: str, base_currencies: List[str], start_date: str, end_date: str, target_currencies: List[str] = None, invert: bool = False) -> pd.DataFrame:
+def get_rates(api_key: str, base_currencies: List[str], start_date: str, end_date: str, 
+              target_currencies: List[str] = None, invert: bool = False) -> pd.DataFrame:
     """
     Main entry point for fetching Forex rates.
     Handles caching, API interaction, and data processing.
@@ -54,8 +95,18 @@ def get_rates(api_key: str, base_currencies: List[str], start_date: str, end_dat
     Returns:
         pd.DataFrame: The processed DataFrame with columns [Currency Base, Currency Source, Date, Exchange Rate].
     """
-    # Get cached base data
-    final_df = _fetch_rates_cached(api_key, base_currencies, start_date, end_date, target_currencies)
+    # Create cache key
+    cache_key = _create_cache_key(api_key, base_currencies, start_date, end_date, target_currencies)
+    
+    # Check cache
+    if _is_cache_valid(_rates_cache_timestamps, cache_key, CACHE_CONFIG.RATE_TTL_SECONDS):
+        final_df = _rates_cache[cache_key].copy()
+    else:
+        # Fetch fresh data
+        final_df = _fetch_rates_internal(api_key, base_currencies, start_date, end_date, target_currencies)
+        # Update cache
+        _rates_cache[cache_key] = final_df.copy()
+        _rates_cache_timestamps[cache_key] = datetime.now()
     
     # Apply inversion OUTSIDE of cache to ensure it always runs
     if invert and not final_df.empty and 'Exchange Rate' in final_df.columns:
@@ -73,11 +124,33 @@ def get_rates(api_key: str, base_currencies: List[str], start_date: str, end_dat
     
     return final_df
 
-@st.cache_data(ttl=CACHE_CONFIG.CURRENCY_TTL_SECONDS, show_spinner=False)
+
 def get_available_currencies(api_key: str, base_currency: str) -> List[str]:
     """
     Fetches all available forex pairs for a given base currency.
     Cached for configured duration (default: 24 hours).
     """
+    cache_key = (api_key, base_currency.upper())
+    
+    # Check cache
+    if _is_cache_valid(_currencies_cache_timestamps, cache_key, CACHE_CONFIG.CURRENCY_TTL_SECONDS):
+        return _currencies_cache[cache_key]
+    
+    # Fetch fresh data
     client = TwelveDataClient(api_key)
-    return client.fetch_available_pairs(base_currency)
+    currencies = client.fetch_available_pairs(base_currency)
+    
+    # Update cache
+    _currencies_cache[cache_key] = currencies
+    _currencies_cache_timestamps[cache_key] = datetime.now()
+    
+    return currencies
+
+
+def clear_facade_cache() -> None:
+    """Clears all facade caches. Useful for testing."""
+    global _rates_cache, _rates_cache_timestamps, _currencies_cache, _currencies_cache_timestamps
+    _rates_cache = {}
+    _rates_cache_timestamps = {}
+    _currencies_cache = {}
+    _currencies_cache_timestamps = {}

@@ -38,6 +38,26 @@ Forex Rate Extractor/
 └── README.md                      # This file
 ```
 
+### High-Level Architecture
+
+```mermaid
+graph TD
+    User([User]) <--> UI[Streamlit UI (code/app.py)]
+    UI --> Facade[Logic Facade (logic/facade.py)]
+    
+    subgraph "Business Logic Layer"
+        Facade --> Auditor[Auditor Module]
+        Facade --> Client[API Client (logic/api_client.py)]
+        Auditor --> Client
+    end
+    
+    Client -- "HTTPS (Rate Limited)" --> TwelveData[((Twelve Data API))]
+    
+    classDef component fill:#d4ebf2,stroke:#005580,stroke-width:1px;
+    class UI,Facade,Auditor,Client component;
+```
+
+
 ## Setup
 
 1.  **Get an API Key**: Sign up at [Twelve Data](https://twelvedata.com/) (Free tier available).

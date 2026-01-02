@@ -25,6 +25,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-test.txt
+          pip install pip-audit
+      
+      - name: Security scan dependencies
+        run: |
+          pip-audit -r requirements.txt --strict
       
       - name: Lint with flake8
         run: |

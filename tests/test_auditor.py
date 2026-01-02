@@ -212,3 +212,168 @@ class TestRunAudit:
         
         # Should handle gracefully (either return empty or None)
         assert result is not None or result is None  # Both are acceptable
+
+
+class TestFetchRateRawMocked:
+    """Tests for _fetch_rate_raw with mocked requests."""
+    
+    def test_happy_path_returns_rate(self, mocker):
+        """Happy path: returns rate when API returns valid data."""
+        from logic.auditor import _fetch_rate_raw
+        
+        mock_response = mocker.MagicMock()
+        mock_response.json.return_value = {
+            'values': [{'close': '18.50'}]
+        }
+        mocker.patch('logic.auditor.requests.get', return_value=mock_response)
+        
+        result = _fetch_rate_raw('test_key', 'ZAR', 'USD', '2024-01-01')
+        
+        assert result == 18.50
+    
+    def test_edge_case_no_values(self, mocker):
+        """Edge case: returns None when API returns empty values."""
+        from logic.auditor import _fetch_rate_raw
+        
+        mock_response = mocker.MagicMock()
+        mock_response.json.return_value = {'values': []}
+        mocker.patch('logic.auditor.requests.get', return_value=mock_response)
+        
+        result = _fetch_rate_raw('test_key', 'ZAR', 'USD', '2024-01-01')
+        
+        assert result is None
+    
+    def test_edge_case_api_rate_limit(self, mocker):
+        """Edge case: returns None when API returns 429 rate limit."""
+        from logic.auditor import _fetch_rate_raw
+        
+        mock_response = mocker.MagicMock()
+        mock_response.json.return_value = {'code': 429, 'message': 'Rate limit exceeded'}
+        mocker.patch('logic.auditor.requests.get', return_value=mock_response)
+        
+        result = _fetch_rate_raw('test_key', 'ZAR', 'USD', '2024-01-01')
+        
+        assert result is None
+    
+    def test_edge_case_network_error(self, mocker):
+        """Edge case: returns None when network error occurs."""
+        from logic.auditor import _fetch_rate_raw
+        import requests
+        
+        mocker.patch('logic.auditor.requests.get', side_effect=requests.RequestException('Network error'))
+        
+        result = _fetch_rate_raw('test_key', 'ZAR', 'USD', '2024-01-01')
+        
+        assert result is None
+    
+    def test_api_url_construction(self, mocker):
+        """Verify API URL and params are correctly constructed."""
+        from logic.auditor import _fetch_rate_raw
+        from logic.config import API_CONFIG
+        
+        mock_response = mocker.MagicMock()
+        mock_response.json.return_value = {'values': [{'close': '18.50'}]}
+        mock_get = mocker.patch('logic.auditor.requests.get', return_value=mock_response)
+        
+        _fetch_rate_raw('my_api_key', 'ZAR', 'USD', '2024-01-15')
+        
+        # Verify the call was made with correct parameters
+        mock_get.assert_called_once()
+        call_args = mock_get.call_args
+        
+        assert f'{API_CONFIG.BASE_URL}/time_series' in call_args[0][0]
+        assert call_args[1]['params']['apikey'] == 'my_api_key'
+        assert call_args[1]['params']['symbol'] == 'ZAR/USD'
+        assert call_args[1]['params']['start_date'] == '2024-01-15'
+
+
+class TestFetchRateWithFallbackMocked:
+    """Tests for _fetch_rate_with_fallback with mocked requests."""
+    
+    def test_happy_path_first_try_succeeds(self, mocker):
+        """Happy path: returns rate on first attempt."""
+        from logic.auditor import _fetch_rate_with_fallback
+        
+        mock_response = mocker.MagicMock()
+        mock_response.json.return_value = {'values': [{'close': '18.50'}]}
+        mocker.patch('logic.auditor.requests.get', return_value=mock_response)
+        
+        result = _fetch_rate_with_fallback('test_key', 'ZAR', 'USD', '2024-01-01')
+        
+        assert result == 18.50
+    
+    def test_fallback_on_weekend(self, mocker):
+        """Fallback: tries previous days when requested date fails."""
+        from logic.auditor import _fetch_rate_with_fallback
+        
+        # First call fails (weekend), second call succeeds (Friday)
+        mock_responses = [
+            mocker.MagicMock(json=mocker.MagicMock(return_value={'values': []})),  # Saturday fails
+            mocker.MagicMock(json=mocker.MagicMock(return_value={'values': [{'close': '18.50'}]}))  # Friday works
+        ]
+        mocker.patch('logic.auditor.requests.get', side_effect=mock_responses)
+        
+        result = _fetch_rate_with_fallback('test_key', 'ZAR', 'USD', '2024-01-06')  # A Saturday
+        
+        assert result == 18.50
+    
+    def test_no_fallback_for_today(self, mocker):
+        """Edge case: no fallback applied for today's date."""
+        from logic.auditor import _fetch_rate_with_fallback
+        from datetime import datetime
+        
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # Mock to return empty (simulating no data for today yet)
+        mock_response = mocker.MagicMock()
+        mock_response.json.return_value = {'values': []}
+        mock_get = mocker.patch('logic.auditor.requests.get', return_value=mock_response)
+        
+        result = _fetch_rate_with_fallback('test_key', 'ZAR', 'USD', today)
+        
+        # Should only call once (no fallback for today)
+        assert mock_get.call_count == 1
+        assert result is None
+
+
+class TestRateCaching:
+    """Tests for rate caching functionality."""
+    
+    def test_cache_hit_avoids_api_call(self, mocker):
+        """Cache hit: uses cached rate instead of API call."""
+        from logic.auditor import _get_cached_rate, _set_cached_rate, clear_rate_cache
+        
+        # Clear any existing cache
+        clear_rate_cache()
+        
+        # Set a cached rate
+        _set_cached_rate('2024-01-01', 'ZAR', 'USD', 18.50)
+        
+        # Verify cache hit
+        result = _get_cached_rate('2024-01-01', 'ZAR', 'USD')
+        
+        assert result == 18.50
+    
+    def test_cache_miss_returns_none(self):
+        """Cache miss: returns None for uncached rate."""
+        from logic.auditor import _get_cached_rate, clear_rate_cache
+        
+        clear_rate_cache()
+        
+        result = _get_cached_rate('2024-12-31', 'XYZ', 'ABC')
+        
+        assert result is None
+    
+    def test_cache_is_case_insensitive(self):
+        """Cache keys are case-insensitive for currency codes."""
+        from logic.auditor import _get_cached_rate, _set_cached_rate, clear_rate_cache
+        
+        clear_rate_cache()
+        
+        _set_cached_rate('2024-01-01', 'zar', 'usd', 18.50)
+        
+        # Should match with uppercase
+        result = _get_cached_rate('2024-01-01', 'ZAR', 'USD')
+        
+        assert result == 18.50
+

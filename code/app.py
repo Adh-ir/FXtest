@@ -66,6 +66,32 @@ def load_css(file_name):
 
 load_css("ui/styles.css")
 
+# --- ACCESSIBILITY HELPER ---
+# Skip Link and Focus Styles
+st.markdown("""
+<style>
+    /* Skip Link for Keyboard Users */
+    .skip-link {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+        background: #066F45;
+        color: white;
+        padding: 10px 20px;
+        z-index: 999999;
+        text-decoration: none;
+        font-weight: bold;
+        border-radius: 4px;
+    }
+    .skip-link:focus {
+        top: 20px;
+        left: 20px;
+        outline: 3px solid #5ddf79;
+    }
+</style>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+""", unsafe_allow_html=True)
+
 # --- AUTHENTICATION ---
 # The Mixed-Font Gradient Title (Semantic H1)
 st.markdown('<h1 class="gradient-title"><span class="title-fx">FX</span> <span class="title-test">Test</span></h1>', unsafe_allow_html=True)
@@ -91,18 +117,20 @@ if not api_key:
     
     with st.form("auth_form"):
         st.markdown("""
-            <h2>🔐 API Key Required</h2>
+            <div role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <h2 id="modal-title">🔐 API Key Required</h2>
             <p style="margin-bottom: 5px;">Please enter your <a href="https://twelvedata.com" target="_blank" style="color: #21BA1C; text-decoration: none; font-weight: bold;">Twelve Data</a> API Key to continue.</p>
             <p style="font-size: 0.8rem; margin-bottom: 15px;"><a href="https://twelvedata.com/account/api-keys" target="_blank" style="color: inherit; text-decoration: underline; opacity: 0.8;">Get your key here</a></p>
+            </div>
         """, unsafe_allow_html=True)
         
-        input_key = st.text_input("API Key", type="password", label_visibility="collapsed", placeholder="Enter your key here...")
+        input_key = st.text_input("API Key", type="password", label_visibility="collapsed", placeholder="Enter your key here...", help="Enter your 32-character API key")
         
         st.markdown('<p class="auth-disclaimer">Your key will be securely stored in your browser for 7 days.</p>', unsafe_allow_html=True)
         
         cols = st.columns([1.5, 1])
         with cols[1]:
-            submitted = st.form_submit_button("Initialise ➜")
+            submitted = st.form_submit_button("Initialize ➜")
         
         if submitted and input_key:
             set_api_key(cookie_manager, input_key)
@@ -165,6 +193,9 @@ else:
         label_visibility="collapsed",
         key="nav_radio"
     )
+    
+    # Main Content Anchor for Skip Link
+    st.markdown('<div id="main-content"></div>', unsafe_allow_html=True)
 
     # ==================== TAB 1: RATE EXTRACTION ====================
     if selected_tab == "📊 Rate Extraction":
@@ -287,7 +318,7 @@ else:
                         source_text = input_container.text_input("Source", value="USD", placeholder="e.g. USD, EUR", label_visibility="collapsed", key="extract_source_fallback")
                         selected_sources = [s.strip() for s in source_text.split(',') if s.strip()]
 
-            st.markdown("**Date Range**")
+            st.markdown("<h4>Date Range</h4>", unsafe_allow_html=True)
             d_col1, d_col2 = st.columns(2)
             with d_col1:
                 start_date = st.date_input("Start Date", key="extract_start", help="Start of historical rate range (YYYY-MM-DD)")
@@ -338,7 +369,15 @@ else:
                              st.error("Backend logic missing")
                             
                     except Exception as e:
-                        st.error(f"An error occurred: {e}")
+                        error_msg = str(e).lower()
+                        if 'rate limit' in error_msg or '429' in error_msg:
+                            st.error("⏱️ API rate limit exceeded. Please wait a minute and try again.")
+                        elif 'unauthorized' in error_msg or '401' in error_msg or 'api key' in error_msg:
+                            st.error("🔑 API key is invalid or expired. Please check your credentials.")
+                        elif 'timeout' in error_msg:
+                            st.error("⌛ Request timed out. Please try again with a smaller date range.")
+                        else:
+                            st.error(f"An error occurred: {e}")
 
             if st.button("Logout / Clear Key", type="secondary", key="logout_btn"):
                 clear_api_key(cookie_manager)
@@ -368,13 +407,13 @@ else:
                     # Formatting and Renaming (agg returns: mean, std, min, max)
                     summary_df.columns = ['Base', 'Source', 'Mean', 'Std Dev', 'Low', 'High']
                     
-                    # Note: CV must be added AFTER renaming
-                    summary_df['CV'] = summary_df['Std Dev'] / summary_df['Mean']
+                    # Note: CV must be added AFTER renaming, format as percentage
+                    summary_df['CV'] = (summary_df['Std Dev'] / summary_df['Mean'] * 100).round(2).astype(str) + '%'
                     
                     # Reorder columns for readability
                     summary_df = summary_df[['Base', 'Source', 'Mean', 'Std Dev', 'CV', 'High', 'Low']]
                     
-                    st.dataframe(summary_df, use_container_width=True, hide_index=True)
+                    st.dataframe(summary_df, use_container_width=True, hide_index=True, height=200)
                 else: # Detailed
                     st.dataframe(
                         res_df, 
@@ -429,7 +468,8 @@ else:
             uploaded_file = st.file_uploader(
                 "Upload your rates file (Excel/CSV)",
                 type=['xlsx', 'xls', 'csv'],
-                key="audit_file"
+                key="audit_file",
+                help="File must contain columns: Date, Base Currency, Source Currency, User Rate"
             )
             
             # Example Template
