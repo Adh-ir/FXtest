@@ -125,7 +125,7 @@ else:
     <style>
     /* Spacing Reduction - Header to Tabs */
     div.row-widget.stRadio {
-        margin-top: -65px !important;
+        margin-top: -80px !important;
     }
     
     /* Ensure content stays within shell */
@@ -174,7 +174,7 @@ else:
         
         # --- LEFT PANE (Inputs) ---
         with col_left:
-            st.markdown("### 🛠️ Configuration")
+            st.markdown('<h3 style="margin-top: -70px;">🛠️ Configuration</h3>', unsafe_allow_html=True)
             
             # User Inputs - Currency Pair Row
             # Uses module-level TOP_CURRENCIES (moved for PEP 8 compliance)
@@ -423,7 +423,7 @@ else:
         
         # --- LEFT PANE (Audit Inputs) ---
         with col_left:
-            st.markdown("### 🔍 Audit Configuration")
+            st.markdown('<h3 style="margin-top: -70px;">🔍 Audit Configuration</h3>', unsafe_allow_html=True)
             
             # File Upload
             uploaded_file = st.file_uploader(
