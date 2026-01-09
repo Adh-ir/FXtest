@@ -27,7 +27,7 @@ def get_relative_luminance(rgb: tuple[int, int, int]) -> float:
     Calculates the relative luminance of a color.
     Formula from WCAG 2.0: https://www.w3.org/TR/WCAG20/#relativeluminancedef
     """
-    rs, gs, bs = [c / 255.0 for c in rgb]
+    rs, gs, bs = (c / 255.0 for c in rgb)
 
     components = []
     for c in [rs, gs, bs]:

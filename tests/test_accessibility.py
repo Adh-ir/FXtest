@@ -8,7 +8,6 @@ focusing on Color Contrast and basic HTML Semantics.
 import os
 
 import pytest
-
 from forex.a11y_checker import (
     calculate_contrast_ratio,
     parse_css_variables,
@@ -75,9 +74,9 @@ def test_color_contrast_compliance(css_variables, bg_var, text_var, min_ratio):
 
     # We allow a small tolerance or just strictly assert
     # Using specific error message to help debug fix
-    assert ratio >= min_ratio, (
-        f"Contrast fail: {bg_var}({bg_hex}) vs {text_var}({text_hex}) = {ratio:.2f}:1 (Required {min_ratio}:1)"
-    )
+    assert (
+        ratio >= min_ratio
+    ), f"Contrast fail: {bg_var}({bg_hex}) vs {text_var}({text_hex}) = {ratio:.2f}:1 (Required {min_ratio}:1)"
 
 
 def test_html_semantics_checker_forex():

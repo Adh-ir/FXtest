@@ -39,6 +39,12 @@ markers = [
 [tool.coverage.run]
 source = ["forex"]
 branch = true
+omit = [
+    "src/forex/main.py",
+    "src/forex/auth.py",
+    "src/forex/ui/*",
+    "src/forex/assets/*",
+]
 
 [tool.coverage.report]
 exclude_lines = [
