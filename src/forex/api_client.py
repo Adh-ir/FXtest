@@ -30,9 +30,9 @@ class TwelveDataClient:
     def __init__(self, api_key: str):
         self.api_key = api_key
         # Queue to track request timestamps for rate limiting
-        self._request_timestamps = deque()
+        self._request_timestamps: deque[float] = deque()
 
-    def _enforce_rate_limit(self):
+    def _enforce_rate_limit(self) -> None:
         """
         Ensures we don't exceed RATE_LIMIT_REQUESTS per RATE_LIMIT_WINDOW.
         Sleeps if necessary.

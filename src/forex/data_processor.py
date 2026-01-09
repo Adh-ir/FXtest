@@ -25,7 +25,7 @@ class DataProcessor:
     AFRICAN_BASKET = ["BWP", "MWK", "NAD", "SZL", "LSL", "ZAR", "NGN", "KES", "EGP"]
 
     @staticmethod
-    def parse_targets(input_str: str, base_currency: str = None, api_client=None) -> list[str]:
+    def parse_targets(input_str: str, base_currency: str | None = None, api_client: object | None = None) -> list[str]:
         """
         Parses user input for target currencies.
 
@@ -61,7 +61,7 @@ class DataProcessor:
             if api_client and base_currency:
                 all_pairs = api_client.fetch_available_pairs(base_currency)
                 if all_pairs:
-                    return all_pairs
+                    return list(all_pairs)
             # Fallback if API call fails
             logger.warning("[ALL] requested but no API client provided or API failed. Using defaults.")
             return DataProcessor.TARGET_BASKET.copy()
@@ -82,7 +82,9 @@ class DataProcessor:
         return [b for b in bases if b]
 
     @classmethod
-    def generate_pairs_config(cls, base_currencies: list[str], target_currencies: list[str] = None) -> list[dict]:
+    def generate_pairs_config(
+        cls, base_currencies: list[str], target_currencies: list[str] | None = None
+    ) -> list[dict[str, object]]:
         """
         Generates a list of dictionaries containing pair configuration.
         Preserves the legacy logic for Exotic-Exotic cross rates via USD.
@@ -139,7 +141,7 @@ class DataProcessor:
         Determines the standard API symbol and inversion based on standard priority.
         """
 
-        def get_priority(curr):
+        def get_priority(curr: str) -> int:
             try:
                 return cls.STANDARD_BASES.index(curr)
             except ValueError:
@@ -159,7 +161,9 @@ class DataProcessor:
                 return f"{currency_b}/{currency_a}", True
 
     @classmethod
-    def process_results(cls, fetcher_results: list[dict], start_date: str = None, end_date: str = None) -> pd.DataFrame:
+    def process_results(
+        cls, fetcher_results: list[dict[str, object]], start_date: str | None = None, end_date: str | None = None
+    ) -> pd.DataFrame:
         """
         Processes fetch results into a single clean DataFrame.
         Applies forward fill if dates are provided.
@@ -278,7 +282,7 @@ class DataProcessor:
         return final_df
 
     @classmethod
-    def _parse_api_response(cls, api_data: dict) -> pd.DataFrame | None:
+    def _parse_api_response(cls, api_data: dict[str, object]) -> pd.DataFrame | None:
         """
         Parses API response into a standardized DataFrame.
         """

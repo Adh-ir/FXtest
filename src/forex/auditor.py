@@ -321,6 +321,7 @@ def process_audit_file(
                     }
 
                 # Use centralized client
+                assert api_client is not None
                 api_rate = _fetch_rate_with_fallback(api_client, base, source, date_str)
 
                 if api_rate is None:

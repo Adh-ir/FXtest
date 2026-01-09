@@ -43,7 +43,7 @@ def _fetch_rates_internal(
     base_currencies: list[str],
     start_date: str,
     end_date: str,
-    target_currencies: list[str] = None,
+    target_currencies: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     Internal function for fetching Forex rates.
@@ -76,7 +76,7 @@ def get_rates(
     base_currencies: list[str],
     start_date: str,
     end_date: str,
-    target_currencies: list[str] = None,
+    target_currencies: list[str] | None = None,
     invert: bool = False,
 ) -> pd.DataFrame:
     """

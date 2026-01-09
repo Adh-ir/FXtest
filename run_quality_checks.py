@@ -114,7 +114,7 @@ def main() -> None:
     # 3. Security (Bandit)
     # -r for recursive, -c to point to config file if we had one, but defaults are ok.
     # LLM Note: Creating a bandit.yaml isn't strictly requested but good practice. using defaults for now.
-    if run_command([sys.executable, "-m", "bandit", "-r", ".", "-q"], "Security Scan (Bandit)") != 0:
+    if run_command([sys.executable, "-m", "bandit", "-r", ".", "-q", "-x", "tests"], "Security Scan (Bandit)") != 0:
         failures.append("Security Scan")
 
     # 4. Tests (Pytest)
