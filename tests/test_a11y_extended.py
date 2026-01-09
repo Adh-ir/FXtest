@@ -1,5 +1,10 @@
 import pytest
-from forex.a11y_checker import calculate_contrast_ratio, check_wcag_compliance, hex_to_rgb, validate_html_semantics
+from forex.a11y_checker import (
+    calculate_contrast_ratio,
+    check_wcag_compliance,
+    hex_to_rgb,
+    validate_html_semantics,
+)
 
 
 class TestA11yExtended:

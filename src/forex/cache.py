@@ -121,7 +121,7 @@ class RedisCache(CacheBackend):
             raise ImportError("Redis package not installed. Install with: pip install redis") from e
 
         url = redis_url or os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-        self._client = redis.from_url(url, decode_responses=True)
+        self._client = redis.from_url(url, decode_responses=True)  # type: ignore[no-untyped-call]
         self._prefix = "forex:"
 
         # Test connection

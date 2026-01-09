@@ -180,7 +180,7 @@ class TwelveDataClient:
                 logger.error(f"API Error: {data.get('message')}")
                 return None
 
-            return data
+            return dict(data)
 
         except requests.RequestException as e:
             # Redact API key from error message if it helps explain the details of the error without leaking secrets

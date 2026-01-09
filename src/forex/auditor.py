@@ -281,7 +281,7 @@ def process_audit_file(
     api_errors = 0
 
     for idx, row in df.iterrows():
-        row_num = int(idx) + 1
+        row_num = int(str(idx)) + 1
 
         date_str = _parse_date(row[col_map["date"]], date_fmt)
         if not date_str:
@@ -430,7 +430,7 @@ def run_audit(
         if update.get("status") == "complete" and "result" in update:
             result = update["result"]
 
-    return result if result else (pd.DataFrame(), {})  # type: ignore[return-value]
+    return result if result else (pd.DataFrame(), {})  # type: ignore[return-value,no-any-return]
 
 
 # Thread pool for async operations
