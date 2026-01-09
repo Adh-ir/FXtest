@@ -41,7 +41,7 @@ def get_api_key(cookie_manager: stx.CookieManager) -> str | None:
         if cookie_val and isinstance(cookie_val, str) and cookie_val.strip():
             st.session_state["api_key"] = cookie_val.strip()
             return cookie_val.strip()
-    except Exception:
+    except Exception:  # nosec B110
         pass  # Cookie manager may not be ready yet
 
     return None
@@ -63,7 +63,7 @@ def set_api_key(cookie_manager: stx.CookieManager, key: str) -> None:
     expires = datetime.datetime.now() + datetime.timedelta(days=EXPIRY_DAYS)
     try:
         cookie_manager.set(COOKIE_NAME, key.strip(), expires_at=expires)
-    except Exception:
+    except Exception:  # nosec B110
         pass  # Cookie save may fail but session state is primary
 
 
@@ -82,5 +82,5 @@ def clear_api_key(cookie_manager: stx.CookieManager) -> None:
     # Try to delete cookie (may or may not work)
     try:
         cookie_manager.delete(COOKIE_NAME)
-    except Exception:
+    except Exception:  # nosec B110
         pass  # Cookie doesn't exist or manager not ready

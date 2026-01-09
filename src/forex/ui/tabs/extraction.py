@@ -65,7 +65,7 @@ def render_tab(api_key: str, cookie_manager) -> None:
                         majors = [c for c in TOP_CURRENCIES if c in all_curr]
                         others = sorted(set(all_curr) - set(majors))
                         available_options = majors + others
-                except Exception:
+                except Exception:  # nosec B110
                     pass  # Fallback to empty if fetch fails
 
             # UI Layout

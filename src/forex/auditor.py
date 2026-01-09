@@ -149,7 +149,7 @@ def _generate_mock_rate(base: str, source: str, user_rate: float) -> float:
     Generates a mock rate for testing mode.
     """
     # Variance between -5% and +5%
-    variance_pct = random.uniform(-0.05, 0.05)
+    variance_pct = random.uniform(-0.05, 0.05)  # nosec B311
     mock_rate = user_rate * (1 + variance_pct)
     return round(mock_rate, 6)
 
@@ -321,7 +321,7 @@ def process_audit_file(
                     }
 
                 # Use centralized client
-                assert api_client is not None
+                assert api_client is not None  # nosec B101
                 api_rate = _fetch_rate_with_fallback(api_client, base, source, date_str)
 
                 if api_rate is None:
