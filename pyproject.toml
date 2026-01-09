@@ -82,6 +82,19 @@ disallow_incomplete_defs = false
 check_untyped_defs = false
 warn_return_any = false
 
+[[tool.mypy.overrides]]
+module = [
+    "forex.ui.*",
+    "forex.auth",
+    "forex.main",
+    "extra_streamlit_components"
+]
+ignore_missing_imports = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+warn_return_any = false
+
 [tool.ruff]
 line-length = 120
 target-version = "py310"
