@@ -430,7 +430,9 @@ def run_audit(
         if update.get("status") == "complete" and "result" in update:
             result = update["result"]
 
-    return result if result else (pd.DataFrame(), {})
+    if result is not None:
+        return result
+    return pd.DataFrame(), {}
 
 
 # Thread pool for async operations
